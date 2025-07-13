@@ -71,23 +71,8 @@ class TranslationManager:
             self.current_language = language_code
             return True
         
-        translation_file = os.path.join(self.translations_dir, f"app_{language_code}.qm")
-        
-        if os.path.exists(translation_file) and self.app:
-            # Rimuovi il traduttore precedente
-            if self.translator:
-                self.app.removeTranslator(self.translator)
-            
-            # Carica il nuovo traduttore
-            self.translator = QTranslator()
-            if self.translator.load(translation_file):
-                self.app.installTranslator(self.translator)
-                self.current_language = language_code
-                return True
-        
-        # Se il file non esiste o l'app non è pronta, usa le traduzioni di fallback
-        self.load_fallback_translation(language_code)
-        return False
+        # Non usare file QM, vai direttamente al fallback
+        return self.load_fallback_translation(language_code)
     
     def load_fallback_translation(self, language_code):
         """Carica traduzioni di fallback da dizionario interno"""

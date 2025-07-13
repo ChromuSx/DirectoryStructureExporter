@@ -106,6 +106,9 @@ class MainWindow(QMainWindow):
     
     def populate_language_combo(self):
         """Popola il combo box delle lingue"""
+        # ⚠️ IMPORTANTE: Disconnetti il segnale per evitare loop
+        self.language_combo.currentIndexChanged.disconnect()
+        
         self.language_combo.clear()
         
         current_lang = translation_manager.get_current_language()
@@ -117,6 +120,9 @@ class MainWindow(QMainWindow):
                 current_index = i
         
         self.language_combo.setCurrentIndex(current_index)
+        
+        # ✅ Riconnetti il segnale
+        self.language_combo.currentIndexChanged.connect(self.change_language)
     
     def update_tab_titles(self):
         """Aggiorna i titoli delle schede"""
@@ -127,12 +133,20 @@ class MainWindow(QMainWindow):
     
     def change_language(self):
         """Cambia la lingua dell'applicazione"""
+        print(f"DEBUG: change_language chiamato, index: {self.language_combo.currentIndex()}")
+        
         if self.language_combo.currentIndex() < 0:
+            print("DEBUG: Nessuna lingua selezionata")
             return
             
         language_code = self.language_combo.currentData()
+        print(f"DEBUG: Lingua richiesta: {language_code}")
+        print(f"DEBUG: Lingua corrente: {translation_manager.get_current_language()}")
+        
         if language_code and language_code != translation_manager.get_current_language():
+            print(f"DEBUG: Tentativo cambio da {translation_manager.get_current_language()} a {language_code}")
             success = translation_manager.change_language(language_code)
+            print(f"DEBUG: Risultato cambio lingua: {success}")
             
             if success:
                 # Aggiorna l'interfaccia
@@ -148,11 +162,14 @@ class MainWindow(QMainWindow):
                     tr("La lingua è stata cambiata. Alcune modifiche potrebbero richiedere il riavvio dell'applicazione.")
                 )
             else:
+                print("DEBUG: Errore nel cambio lingua")
                 QMessageBox.warning(
                     self, 
                     tr("Errore"), 
                     tr("Errore nel caricamento della lingua selezionata.")
                 )
+        else:
+            print("DEBUG: Nessun cambio necessario o lingua non valida")
     
     def retranslate_ui(self):
         """Ricarica tutte le traduzioni dell'interfaccia"""
