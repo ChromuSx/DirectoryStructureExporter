@@ -8,7 +8,6 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QSettings, QUrl, QMimeData
 from PyQt6.QtGui import QColor, QDesktopServices, QDragEnterEvent, QDropEvent
 from PyQt6.QtWidgets import QProgressBar
-from utils.directory_scanner import DirectoryScannerThread
 
 class ExportTab(QWidget):
     def __init__(self, exporter, filter_manager, settings):
@@ -41,19 +40,6 @@ class ExportTab(QWidget):
         dir_layout.addWidget(self.dir_path, 1)
         dir_layout.addWidget(browse_dir_btn)
         dir_layout.addWidget(drop_hint)
-        dir_group.setLayout(dir_layout)
-        
-        # Gruppo per la selezione della directory
-        dir_group = QGroupBox("Selezione Directory")
-        dir_layout = QHBoxLayout()
-        
-        self.dir_path = QLineEdit()
-        browse_dir_btn = QPushButton("Sfoglia...")
-        browse_dir_btn.clicked.connect(self.browse_directory)
-        
-        dir_layout.addWidget(QLabel("Directory:"))
-        dir_layout.addWidget(self.dir_path, 1)
-        dir_layout.addWidget(browse_dir_btn)
         dir_group.setLayout(dir_layout)
         
         # Gruppo per il file di output
@@ -109,9 +95,6 @@ class ExportTab(QWidget):
         
         action_layout.addWidget(export_btn)
 
-        tree_group = QGroupBox("Struttura Directory")
-        tree_layout = QVBoxLayout()
-        
         # Area vista struttura
         tree_group = QGroupBox("Struttura Directory")
         tree_layout = QVBoxLayout()
@@ -148,32 +131,11 @@ class ExportTab(QWidget):
         self.tree_widget.setColumnWidth(0, 300)
         self.tree_widget.setAlternatingRowColors(True)
         self.tree_widget.itemExpanded.connect(self.on_item_expanded)
-
-        progress_layout = QHBoxLayout()
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(100)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setTextVisible(True)
-        self.progress_bar.setVisible(False)  # Nascosta per default
-        
-        self.progress_label = QLabel("In attesa...")
-        self.progress_label.setVisible(False)
-        
-        self.cancel_scan_btn = QPushButton("Annulla")
-        self.cancel_scan_btn.clicked.connect(self.cancel_scan)
-        self.cancel_scan_btn.setVisible(False)
-        
-        progress_layout.addWidget(self.progress_label)
-        progress_layout.addWidget(self.progress_bar, 1)
-        progress_layout.addWidget(self.cancel_scan_btn)
         
         # Componiamo il layout della vista ad albero
         tree_layout.addLayout(tree_controls)
         tree_layout.addWidget(self.tree_widget)
-        tree_layout.addLayout(progress_layout)
         tree_group.setLayout(tree_layout)
-        
         
         # Aggiungi tutto al layout principale
         layout.addWidget(dir_group)
@@ -324,7 +286,7 @@ class ExportTab(QWidget):
             QMessageBox.critical(self, "Errore", error_message)
     
     def load_tree_structure(self):
-        """Carica la struttura delle directory nell'albero"""
+        """Carica la struttura delle directory nell'albero usando lazy loading"""
         directory = self.dir_path.text()
         if not directory:
             QMessageBox.warning(self, "Errore", "Seleziona prima una directory.")
@@ -332,13 +294,6 @@ class ExportTab(QWidget):
 
         # Resetta l'albero
         self.tree_widget.clear()
-        
-        # Prepara la UI per la scansione
-        self.progress_bar.setValue(0)
-        self.progress_bar.setVisible(True)
-        self.progress_label.setText("Preparazione scansione...")
-        self.progress_label.setVisible(True)
-        self.cancel_scan_btn.setVisible(True)
         
         # Crea l'elemento radice
         root_path = Path(directory)
@@ -355,25 +310,8 @@ class ExportTab(QWidget):
         font.setBold(True)
         self.root_item.setFont(0, font)
         
-        # Avvia il thread di scansione
-        self.scanner = DirectoryScannerThread(
-            root_path,
-            self.filter_manager,
-            self.show_files_check.isChecked(),
-            self.apply_filters_check.isChecked(),
-            None if self.depth_spin.value() == 0 else self.depth_spin.value()
-        )
-        
-        # Connessione dei segnali
-        self.scanner.progress_updated.connect(self.update_scan_progress)
-        self.scanner.status_updated.connect(self.update_scan_status)
-        self.scanner.directory_scanned.connect(self.process_scanned_directory)
-        self.scanner.scan_completed.connect(self.on_scan_completed)
-        self.scanner.scan_canceled.connect(self.on_scan_canceled)
-        self.scanner.scan_error.connect(self.on_scan_error)
-        
-        # Avvio del thread
-        self.scanner.start()
+        # Popola immediatamente il primo livello
+        self.populate_tree_item(self.root_item, root_path, 0)
         
         # Espandiamo l'elemento radice
         self.root_item.setExpanded(True)
@@ -381,114 +319,19 @@ class ExportTab(QWidget):
         # Mostriamo un messaggio nella statusbar
         main_window = self.window()
         if main_window and hasattr(main_window, 'statusBar'):
-            main_window.statusBar.showMessage(f"Scansione in corso: {directory}")
-    
-    def update_scan_progress(self, value):
-        """Aggiorna la barra di progresso"""
-        self.progress_bar.setValue(value)
-
-    def update_scan_status(self, message):
-        """Aggiorna il messaggio di stato"""
-        self.progress_label.setText(message)
-
-    def process_scanned_directory(self, path, entries):
-        """Processa i risultati di una directory scansionata"""
-        # Troviamo l'elemento corrispondente al percorso
-        parent_item = self.find_tree_item_by_path(str(path))
-        
-        if parent_item:
-            # Se l'elemento ha un figlio "Caricamento...", lo rimuoviamo
-            if parent_item.childCount() == 1 and parent_item.child(0).text(0) == "Caricamento...":
-                parent_item.removeChild(parent_item.child(0))
-                
-            # Aggiungiamo gli elementi trovati
-            for entry, is_dir in entries:
-                item = QTreeWidgetItem(parent_item)
-                item.setText(0, entry.name)
-                item.setText(2, str(entry))
-                
-                if is_dir:
-                    # È una directory
-                    item.setText(1, "Directory")
-                    item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
-                    
-                    # Aggiungiamo un elemento temporaneo
-                    QTreeWidgetItem(item, ["Caricamento..."])
-                else:
-                    # È un file
-                    item.setText(1, "File")
-                    item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
-
-    def find_tree_item_by_path(self, path_str):
-        """Trova un elemento nell'albero in base al percorso"""
-        # Controlla l'elemento radice
-        if self.tree_widget.topLevelItemCount() > 0:
-            root_item = self.tree_widget.topLevelItem(0)
-            if root_item.text(2) == path_str:
-                return root_item
-                
-            # Ricerca ricorsiva
-            return self.find_tree_item_by_path_recursive(root_item, path_str)
-        
-        return None
-
-    def find_tree_item_by_path_recursive(self, parent_item, path_str):
-        """Ricerca ricorsiva di un elemento per percorso"""
-        for i in range(parent_item.childCount()):
-            child = parent_item.child(i)
-            if child.text(2) == path_str:
-                return child
-                
-            # Ricerca nei figli
-            found = self.find_tree_item_by_path_recursive(child, path_str)
-            if found:
-                return found
-        
-        return None
-
-    def on_scan_completed(self):
-        """Gestisce il completamento della scansione"""
-        self.progress_bar.setVisible(False)
-        self.progress_label.setVisible(False)
-        self.cancel_scan_btn.setVisible(False)
-        
-        # Mostra messaggio nella statusbar
-        main_window = self.window()
-        if main_window and hasattr(main_window, 'statusBar'):
-            directory = self.dir_path.text()
             main_window.statusBar.showMessage(f"Struttura caricata: {directory}")
-
-    def on_scan_canceled(self):
-        """Gestisce l'annullamento della scansione"""
-        self.progress_bar.setVisible(False)
-        self.progress_label.setVisible(False)
-        self.cancel_scan_btn.setVisible(False)
+    
+    def populate_tree_item(self, parent_item, path, current_depth=0):
+        """Popola un elemento dell'albero con i suoi figli diretti"""
+        # Rimuovi tutti i figli esistenti
+        while parent_item.childCount() > 0:
+            parent_item.removeChild(parent_item.child(0))
         
-        # Mostra messaggio nella statusbar
-        main_window = self.window()
-        if main_window and hasattr(main_window, 'statusBar'):
-            main_window.statusBar.showMessage("Scansione annullata")
-
-    def on_scan_error(self, error_message):
-        """Gestisce gli errori durante la scansione"""
-        self.progress_bar.setVisible(False)
-        self.progress_label.setVisible(False)
-        self.cancel_scan_btn.setVisible(False)
+        # Controlla se rispettiamo la profondità massima
+        max_depth = None if self.depth_spin.value() == 0 else self.depth_spin.value()
+        if max_depth is not None and current_depth >= max_depth:
+            return
         
-        QMessageBox.critical(self, "Errore di scansione", f"Si è verificato un errore durante la scansione: {error_message}")
-        
-        main_window = self.window()
-        if main_window and hasattr(main_window, 'statusBar'):
-            main_window.statusBar.showMessage(f"Errore di scansione: {error_message}")
-
-    def cancel_scan(self):
-        """Annulla la scansione in corso"""
-        if hasattr(self, 'scanner') and self.scanner.isRunning():
-            self.scanner.cancel()
-            self.progress_label.setText("Annullamento in corso...")
-
-    def populate_tree_item(self, parent_item, path):
-        """Popola un elemento dell'albero con i suoi figli"""
         # Controlla se applicare i filtri
         apply_filters = self.apply_filters_check.isChecked()
         
@@ -518,8 +361,13 @@ class ExportTab(QWidget):
                     item.setText(1, "Directory")
                     item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
                     
-                    # Aggiungi un elemento temporaneo per mostrare l'icona di espansione
-                    QTreeWidgetItem(item, ["Caricamento..."])
+                    # Controlla se la directory ha contenuti per decidere se aggiungere l'indicatore di espansione
+                    if self.directory_has_content(entry, apply_filters):
+                        # Aggiungi un elemento temporaneo per abilitare l'espansione
+                        temp_item = QTreeWidgetItem(item)
+                        temp_item.setText(0, "...")
+                        temp_item.setText(1, "Caricamento")
+                        temp_item.setForeground(0, QColor(128, 128, 128))
                 else:
                     # È un file
                     item.setText(1, "File")
@@ -532,47 +380,42 @@ class ExportTab(QWidget):
             error_item.setText(1, "Errore")
             error_item.setForeground(0, QColor(255, 0, 0))
     
+    def directory_has_content(self, directory_path, apply_filters):
+        """Verifica se una directory ha contenuti visibili"""
+        try:
+            for entry in directory_path.iterdir():
+                if entry.is_dir():
+                    if not (apply_filters and self.filter_manager.is_excluded_dir(entry.name)):
+                        return True
+                elif self.show_files_check.isChecked():
+                    if not (apply_filters and not self.filter_manager.is_included_file(entry)):
+                        return True
+        except (PermissionError, OSError):
+            pass
+        return False
+    
     def on_item_expanded(self, item):
         """Gestisce l'espansione di un elemento"""
-        # Se l'elemento ha solo un figlio "Caricamento..." lo sostituisce con il contenuto effettivo
-        if item.childCount() == 1 and item.child(0).text(0) == "Caricamento...":
+        # Controlla se l'elemento ha un figlio temporaneo
+        if (item.childCount() == 1 and 
+            item.child(0).text(0) == "..." and 
+            item.child(0).text(1) == "Caricamento"):
+            
             path = Path(item.text(2))
-            # Il contenuto verrà caricato dal thread di scansione
-            # Mostriamo solo un indicatore di caricamento
-            item.child(0).setText(0, "Caricamento in corso...")
             
-            # Creiamo e avviamo un thread per questa directory specifica
-            scanner = DirectoryScannerThread(
-                path,
-                self.filter_manager,
-                self.show_files_check.isChecked(),
-                self.apply_filters_check.isChecked(),
-                None  # Non impostiamo max_depth qui poiché stiamo caricando solo i figli diretti
-            )
+            # Calcola la profondità corrente
+            current_depth = 0
+            parent = item.parent()
+            while parent:
+                current_depth += 1
+                parent = parent.parent()
             
-            # Connessione dei segnali
-            scanner.directory_scanned.connect(self.process_scanned_directory)
-            scanner.scan_error.connect(lambda msg: self.on_item_scan_error(item, msg))
-            
-            # Salva il riferimento per evitare che venga garbage-collected
-            self.current_item_scanner = scanner
-            scanner.start()
-
-    def on_item_scan_error(self, item, error_message):
-        """Gestisce gli errori durante la scansione di un item"""
-        # Rimuove tutti i figli
-        while item.childCount() > 0:
-            item.removeChild(item.child(0))
-        
-        # Aggiunge un elemento di errore
-        error_item = QTreeWidgetItem(item)
-        error_item.setText(0, f"Errore: {error_message}")
-        error_item.setText(1, "Errore")
-        error_item.setForeground(0, QColor(255, 0, 0))
+            # Popola con il contenuto reale
+            self.populate_tree_item(item, path, current_depth)
     
     def reload_tree_structure(self):
         """Ricarica la struttura dell'albero applicando i filtri correnti"""
-        # Verifica che tree_widget esista
+        # Verifica che tree_widget esista e che ci sia una directory selezionata
         if hasattr(self, 'tree_widget') and self.tree_widget.topLevelItemCount() > 0:
             # Ricarichiamo la struttura
             self.load_tree_structure()
@@ -582,8 +425,6 @@ class ExportTab(QWidget):
         search_text = self.search_input.text().lower()
         
         def set_item_visible(item, visible):
-            # PyQt non ha un metodo diretto per nascondere gli elementi dell'albero
-            # quindi impostiamo un'altezza di riga pari a 0 per nasconderli
             item.setHidden(not visible)
         
         def search_in_item(item):

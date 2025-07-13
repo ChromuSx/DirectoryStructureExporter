@@ -21,7 +21,6 @@ class DirectoryScannerThread(QThread):
         self.max_depth = max_depth
         self.canceled = False
         
-        # Scansione preliminare per contare gli elementi
         self.total_items = 0
         self.scanned_items = 0
     
