@@ -107,6 +107,76 @@ class FiltersTab(QWidget):
         layout.addLayout(action_layout)
         layout.addStretch(1)  # Spazio flessibile in fondo
 
+    def retranslate_ui(self):
+        """Aggiorna tutte le traduzioni dell'interfaccia"""
+        from utils.translation_manager import tr
+        
+        # Aggiorna i titoli dei gruppi
+        for i in range(self.layout().count()):
+            item = self.layout().itemAt(i)
+            if item and item.widget() and hasattr(item.widget(), 'setTitle'):
+                widget = item.widget()
+                title = widget.title().lower()
+                if 'dimensione' in title or 'size' in title:
+                    widget.setTitle(tr("Filtri dimensione file"))
+                elif 'creazione' in title or 'creation' in title:
+                    widget.setTitle(tr("Filtri data creazione"))
+                elif 'modifica' in title or 'modification' in title:
+                    widget.setTitle(tr("Filtri data modifica"))
+        
+        # Aggiorna le etichette
+        self._update_labels_in_widget(self)
+        
+        # Aggiorna i pulsanti
+        self._update_buttons_in_widget(self)
+        
+        # Aggiorna i checkbox
+        self._update_checkboxes_in_widget(self)
+        
+        # Aggiorna lo special value text dello spinbox
+        if hasattr(self, 'max_size_spin'):
+            self.max_size_spin.setSpecialValueText(tr("Illimitato"))
+
+    def _update_labels_in_widget(self, widget):
+        """Aggiorna ricorsivamente le etichette in un widget"""
+        from utils.translation_manager import tr
+        from PyQt6.QtWidgets import QLabel
+        
+        for child in widget.findChildren(QLabel):
+            text = child.text().lower()
+            if 'dimensione minima' in text or 'minimum size' in text:
+                child.setText(tr("Dimensione minima (bytes):"))
+            elif 'dimensione massima' in text or 'maximum size' in text:
+                child.setText(tr("Dimensione massima (bytes):"))
+            elif 'data minima' in text or 'minimum date' in text:
+                child.setText(tr("Data minima:"))
+            elif 'data massima' in text or 'maximum date' in text:
+                child.setText(tr("Data massima:"))
+
+    def _update_buttons_in_widget(self, widget):
+        """Aggiorna ricorsivamente i pulsanti in un widget"""
+        from utils.translation_manager import tr
+        from PyQt6.QtWidgets import QPushButton
+        
+        for child in widget.findChildren(QPushButton):
+            text = child.text().lower()
+            if 'applica filtri' in text or 'apply filters' in text:
+                child.setText(tr("Applica filtri"))
+            elif 'reimposta' in text or 'reset' in text:
+                child.setText(tr("Reimposta filtri predefiniti"))
+
+    def _update_checkboxes_in_widget(self, widget):
+        """Aggiorna ricorsivamente i checkbox in un widget"""
+        from utils.translation_manager import tr
+        from PyQt6.QtWidgets import QCheckBox
+        
+        for child in widget.findChildren(QCheckBox):
+            text = child.text().lower()
+            if 'creazione' in text or 'creation' in text:
+                child.setText(tr("Attiva filtro per data di creazione"))
+            elif 'modifica' in text or 'modification' in text:
+                child.setText(tr("Attiva filtro per data di modifica"))
+
     def update_filters_ui(self):
         """Aggiorna l'interfaccia utente con i valori attuali dei filtri"""
         # Aggiorna i controlli di dimensione file

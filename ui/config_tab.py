@@ -181,6 +181,79 @@ class ConfigTab(QWidget):
         layout.addWidget(included_exts_group)
         layout.addLayout(config_buttons_layout)
 
+    def retranslate_ui(self):
+        """Aggiorna tutte le traduzioni dell'interfaccia"""
+        from utils.translation_manager import tr
+        
+        # Aggiorna i titoli dei gruppi
+        for i in range(self.layout().count()):
+            widget = self.layout().itemAt(i).widget()
+            if hasattr(widget, 'setTitle'):
+                if 'directory escluse' in widget.title().lower() or 'excluded directories' in widget.title().lower():
+                    widget.setTitle(tr("Directory escluse"))
+                elif 'file esclusi' in widget.title().lower() or 'excluded files' in widget.title().lower():
+                    widget.setTitle(tr("File esclusi"))
+                elif 'estensioni incluse' in widget.title().lower() or 'included extensions' in widget.title().lower():
+                    widget.setTitle(tr("Estensioni incluse"))
+                elif 'preset' in widget.title().lower():
+                    widget.setTitle(tr("Preset Configurazioni"))
+                elif 'percorso' in widget.title().lower() or 'path' in widget.title().lower():
+                    widget.setTitle(tr("Percorso File Preset"))
+        
+        # Aggiorna le etichette
+        if hasattr(self, 'preset_path_edit'):
+            # Trova e aggiorna le etichette nei layout
+            self._update_labels_in_widget(self)
+        
+        # Aggiorna i pulsanti
+        self._update_buttons_in_widget(self)
+        
+        # Aggiorna la combo dei preset
+        if hasattr(self, 'preset_combo'):
+            current_index = self.preset_combo.currentIndex()
+            if current_index == 0:
+                self.preset_combo.setItemText(0, tr("-- Seleziona un preset --"))
+
+    def _update_labels_in_widget(self, widget):
+        """Aggiorna ricorsivamente le etichette in un widget"""
+        from utils.translation_manager import tr
+        from PyQt6.QtWidgets import QLabel
+        
+        for child in widget.findChildren(QLabel):
+            text = child.text()
+            if 'file preset' in text.lower() or 'preset file' in text.lower():
+                child.setText(tr("File preset:"))
+            elif 'preset:' in text.lower():
+                child.setText(tr("Preset:"))
+
+    def _update_buttons_in_widget(self, widget):
+        """Aggiorna ricorsivamente i pulsanti in un widget"""
+        from utils.translation_manager import tr
+        from PyQt6.QtWidgets import QPushButton
+        
+        for child in widget.findChildren(QPushButton):
+            text = child.text()
+            if 'sfoglia' in text.lower() or 'browse' in text.lower():
+                child.setText(tr("Sfoglia..."))
+            elif 'applica' in text.lower() or 'apply' in text.lower():
+                child.setText(tr("Applica"))
+            elif 'salva come nuovo' in text.lower() or 'save as new' in text.lower():
+                child.setText(tr("Salva come nuovo"))
+            elif 'aggiorna selezionato' in text.lower() or 'update selected' in text.lower():
+                child.setText(tr("Aggiorna selezionato"))
+            elif 'elimina selezionato' in text.lower() or 'delete selected' in text.lower():
+                child.setText(tr("Elimina selezionato"))
+            elif 'aggiungi regex' in text.lower() or 'add regex' in text.lower():
+                child.setText(tr("Aggiungi Regex"))
+            elif 'aggiungi' in text.lower() or 'add' == text.lower():
+                child.setText(tr("Aggiungi"))
+            elif 'rimuovi' in text.lower() or 'remove' in text.lower():
+                child.setText(tr("Rimuovi"))
+            elif 'salva configurazione' in text.lower() or 'save configuration' in text.lower():
+                child.setText(tr("Salva configurazione"))
+            elif 'carica configurazione' in text.lower() or 'load configuration' in text.lower():
+                child.setText(tr("Carica configurazione"))
+
     def browse_preset_path(self):
         """Permette all'utente di scegliere il percorso del file dei preset"""
         file_path, _ = QFileDialog.getSaveFileName(

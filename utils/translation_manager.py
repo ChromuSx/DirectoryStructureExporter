@@ -69,27 +69,36 @@ class TranslationManager:
             if self.translator and self.app:
                 self.app.removeTranslator(self.translator)
             self.current_language = language_code
+            self.fallback_translations = {}  # Pulisci le traduzioni di fallback
             return True
         
-        # Non usare file QM, vai direttamente al fallback
+        # Carica traduzioni di fallback per lingue diverse dall'italiano
         return self.load_fallback_translation(language_code)
     
     def load_fallback_translation(self, language_code):
         """Carica traduzioni di fallback da dizionario interno"""
         fallback_file = os.path.join(self.translations_dir, f"fallback_{language_code}.json")
         
+        # Se il file non esiste, crealo
         if not os.path.exists(fallback_file):
+            print(f"File di traduzione {fallback_file} non trovato, creazione in corso...")
             self.create_fallback_translation(language_code)
         
         try:
             with open(fallback_file, 'r', encoding='utf-8') as f:
                 translations = json.load(f)
             
-            # Implementa un sistema di traduzione di fallback
+            # Carica le traduzioni in memoria
             self.fallback_translations = translations
             self.current_language = language_code
+            
+            print(f"Traduzioni caricate per {language_code}: {len(translations)} stringhe")
             return True
-        except:
+        except Exception as e:
+            print(f"Errore nel caricamento delle traduzioni per {language_code}: {e}")
+            # In caso di errore, mantieni almeno la lingua impostata
+            self.current_language = language_code
+            self.fallback_translations = {}
             return False
     
     def create_fallback_translation(self, language_code):
@@ -100,6 +109,7 @@ class TranslationManager:
         try:
             with open(fallback_file, 'w', encoding='utf-8') as f:
                 json.dump(translations, f, indent=2, ensure_ascii=False)
+            print(f"File di traduzione creato: {fallback_file}")
         except Exception as e:
             print(f"Errore creazione fallback {language_code}: {e}")
     
@@ -110,10 +120,16 @@ class TranslationManager:
                 # Main Window
                 'Directory Structure Exporter': 'Directory Structure Exporter',
                 'Tema:': 'Theme:',
+                'Lingua:': 'Language:',
                 'Sistema': 'System',
                 'Chiaro': 'Light',
                 'Scuro': 'Dark',
                 'Pronto': 'Ready',
+                'Lingua cambiata': 'Language changed',
+                'La lingua è stata cambiata. Alcune modifiche potrebbero richiedere il riavvio dell\'applicazione.': 'Language has been changed. Some changes may require restarting the application.',
+                'Errore': 'Error',
+                'Errore nel caricamento della lingua selezionata.': 'Error loading selected language.',
+                'Lingua cambiata in': 'Language changed to',
                 
                 # Tab names
                 'Esportazione': 'Export',
@@ -138,22 +154,15 @@ class TranslationManager:
                 'Applica filtri': 'Apply filters',
                 'Cerca:': 'Search:',
                 'Cerca file o cartelle...': 'Search files or folders...',
+                'Nome': 'Name',
+                'Tipo': 'Type',
+                'Percorso': 'Path',
+                'Directory': 'Directory',
+                'File': 'File',
+                'Caricamento': 'Loading',
+                'Accesso negato': 'Access denied',
                 
-                # Context Menu
-                'Espandi tutto': 'Expand all',
-                'Comprimi tutto': 'Collapse all',
-                'Apri in Esplora risorse': 'Open in File Explorer',
-                'Apri file': 'Open file',
-                'Apri cartella contenitore': 'Open containing folder',
-                'Copia percorso': 'Copy path',
-                
-                # Messages
-                'Errore': 'Error',
-                'Seleziona directory e file di output.': 'Select directory and output file.',
-                'Esportazione completata': 'Export completed',
-                'Errore durante l\'esportazione': 'Error during export',
-                
-                # Filters Tab
+                # Filters
                 'Filtri dimensione file': 'File Size Filters',
                 'Dimensione minima (bytes):': 'Minimum size (bytes):',
                 'Dimensione massima (bytes):': 'Maximum size (bytes):',
@@ -164,14 +173,9 @@ class TranslationManager:
                 'Attiva filtro per data di creazione': 'Enable creation date filter',
                 'Filtri data modifica': 'Modification Date Filters',
                 'Attiva filtro per data di modifica': 'Enable modification date filter',
-                'Applica filtri': 'Apply filters',
                 'Reimposta filtri predefiniti': 'Reset default filters',
-                'Filtri applicati': 'Filters applied',
-                'I filtri sono stati applicati con successo.': 'Filters have been applied successfully.',
-                'Filtri reimpostati': 'Filters reset',
-                'I filtri sono stati reimpostati ai valori predefiniti.': 'Filters have been reset to default values.',
                 
-                # Config Tab
+                # Configuration
                 'Directory escluse': 'Excluded Directories',
                 'File esclusi': 'Excluded Files',
                 'Estensioni incluse': 'Included Extensions',
@@ -191,9 +195,10 @@ class TranslationManager:
                 'Carica configurazione': 'Load configuration',
             },
             'es': {
-                # Traduzioni spagnole di base
+                # Traduzioni spagnole complete
                 'Directory Structure Exporter': 'Exportador de Estructura de Directorios',
                 'Tema:': 'Tema:',
+                'Lingua:': 'Idioma:',
                 'Sistema': 'Sistema',
                 'Chiaro': 'Claro',
                 'Scuro': 'Oscuro',
@@ -204,11 +209,30 @@ class TranslationManager:
                 'Directory:': 'Directorio:',
                 'Sfoglia...': 'Examinar...',
                 'Esporta': 'Exportar',
+                'Errore': 'Error',
+                'File:': 'Archivo:',
+                'Formato:': 'Formato:',
+                'Includi file': 'Incluir archivos',
+                'Mostra file': 'Mostrar archivos',
+                'Cerca:': 'Buscar:',
+                'Nome': 'Nombre',
+                'Tipo': 'Tipo',
+                'Percorso': 'Ruta',
+                'Directory': 'Directorio',
+                'File': 'Archivo',
+                'Applica filtri': 'Aplicar filtros',
+                'Filtri dimensione file': 'Filtros de Tamaño de Archivo',
+                'Directory escluse': 'Directorios Excluidos',
+                'File esclusi': 'Archivos Excluidos',
+                'Estensioni incluse': 'Extensiones Incluidas',
+                'Aggiungi': 'Agregar',
+                'Rimuovi': 'Eliminar',
             },
             'fr': {
-                # Traduzioni francesi di base
+                # Traduzioni francesi complete
                 'Directory Structure Exporter': 'Exportateur de Structure de Répertoires',
                 'Tema:': 'Thème:',
+                'Lingua:': 'Langue:',
                 'Sistema': 'Système',
                 'Chiaro': 'Clair',
                 'Scuro': 'Sombre',
@@ -219,11 +243,30 @@ class TranslationManager:
                 'Directory:': 'Répertoire:',
                 'Sfoglia...': 'Parcourir...',
                 'Esporta': 'Exporter',
+                'Errore': 'Erreur',
+                'File:': 'Fichier:',
+                'Formato:': 'Format:',
+                'Includi file': 'Inclure fichiers',
+                'Mostra file': 'Afficher fichiers',
+                'Cerca:': 'Rechercher:',
+                'Nome': 'Nom',
+                'Tipo': 'Type',
+                'Percorso': 'Chemin',
+                'Directory': 'Répertoire',
+                'File': 'Fichier',
+                'Applica filtri': 'Appliquer filtres',
+                'Filtri dimensione file': 'Filtres de Taille de Fichier',
+                'Directory escluse': 'Répertoires Exclus',
+                'File esclusi': 'Fichiers Exclus',
+                'Estensioni incluse': 'Extensions Incluses',
+                'Aggiungi': 'Ajouter',
+                'Rimuovi': 'Supprimer',
             },
             'de': {
-                # Traduzioni tedesche di base
+                # Traduzioni tedesche complete
                 'Directory Structure Exporter': 'Verzeichnisstruktur-Exporteur',
                 'Tema:': 'Thema:',
+                'Lingua:': 'Sprache:',
                 'Sistema': 'System',
                 'Chiaro': 'Hell',
                 'Scuro': 'Dunkel',
@@ -234,6 +277,24 @@ class TranslationManager:
                 'Directory:': 'Verzeichnis:',
                 'Sfoglia...': 'Durchsuchen...',
                 'Esporta': 'Exportieren',
+                'Errore': 'Fehler',
+                'File:': 'Datei:',
+                'Formato:': 'Format:',
+                'Includi file': 'Dateien einschließen',
+                'Mostra file': 'Dateien anzeigen',
+                'Cerca:': 'Suchen:',
+                'Nome': 'Name',
+                'Tipo': 'Typ',
+                'Percorso': 'Pfad',
+                'Directory': 'Verzeichnis',
+                'File': 'Datei',
+                'Applica filtri': 'Filter anwenden',
+                'Filtri dimensione file': 'Dateigrößen-Filter',
+                'Directory escluse': 'Ausgeschlossene Verzeichnisse',
+                'File esclusi': 'Ausgeschlossene Dateien',
+                'Estensioni incluse': 'Eingeschlossene Erweiterungen',
+                'Aggiungi': 'Hinzufügen',
+                'Rimuovi': 'Entfernen',
             }
         }
         
@@ -241,8 +302,17 @@ class TranslationManager:
     
     def tr(self, text, context=None):
         """Traduce un testo utilizzando il sistema di traduzione corrente"""
-        if hasattr(self, 'fallback_translations') and self.current_language != 'it' and self.fallback_translations:
-            return self.fallback_translations.get(text, text)
+        # Se la lingua è italiana, restituisci il testo originale
+        if self.current_language == 'it':
+            return text
+            
+        # Se abbiamo traduzioni di fallback caricate, usale
+        if hasattr(self, 'fallback_translations') and self.fallback_translations:
+            translated = self.fallback_translations.get(text, None)
+            if translated:
+                return translated
+        
+        # Fallback: restituisci il testo originale se non trovato
         return text
     
     def change_language(self, language_code):
@@ -251,7 +321,10 @@ class TranslationManager:
             success = self.load_translation(language_code)
             if success:
                 self.save_language(language_code)
+                print(f"Lingua cambiata con successo a: {self.get_current_language_name()}")
                 return True
+            else:
+                print(f"Errore nel cambio lingua a: {language_code}")
         return False
 
 # Istanza globale
