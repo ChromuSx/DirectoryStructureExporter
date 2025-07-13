@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QVBoxLayout, QHBoxLayout, 
                            QWidget, QLabel, QComboBox, QPushButton, QStatusBar, 
                            QApplication)
-from PyQt6.QtCore import QSettings
+from PyQt6.QtCore import QSettings, Qt
 from PyQt6.QtGui import QColor, QIcon, QPalette
 
 from ui.export_tab import ExportTab
@@ -26,97 +26,28 @@ class MainWindow(QMainWindow):
         
         # Carica le impostazioni salvate
         self.load_settings()
-
-    def create_header_with_logo(self):
-        """Crea un header con logo e titolo"""
-        header_widget = QWidget()
-        header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(10, 10, 10, 5)
-        
-        # Logo
-        logo_label = QLabel()
-        pixmap = resource_manager.get_logo_pixmap((48, 48))
-        if not pixmap.isNull():
-            logo_label.setPixmap(pixmap)
-        else:
-            logo_label.setText("📁")  # Fallback emoji
-            logo_label.setStyleSheet("font-size: 32px;")
-        
-        # Titolo dell'applicazione
-        title_label = QLabel("Directory Structure Exporter")
-        title_label.setStyleSheet("""
-            font-size: 18px; 
-            font-weight: bold; 
-            color: #2563eb;
-            margin-left: 10px;
-        """)
-        
-        # Layout header
-        header_layout.addWidget(logo_label)
-        header_layout.addWidget(title_label)
-        header_layout.addStretch(1)
-        
-        return header_widget
     
     def initUI(self):
         """Inizializza l'interfaccia utente"""
-        # Imposta il titolo e la dimensione della finestra
         self.setWindowTitle("Directory Structure Exporter")
         self.resize(900, 600)
 
-        # Widget centrale
-        central_widget = QWidget()
-        main_layout = QVBoxLayout(central_widget)
-
-        # AGGIUNTA: Header con logo
-        header = self.create_header_with_logo()
-        main_layout.addWidget(header)
-
-        # Linea separatrice (opzionale)
-        separator = QWidget()
-        separator.setFixedHeight(1)
-        separator.setStyleSheet("background-color: #e5e7eb;")
-        main_layout.addWidget(separator)
+        # Imposta l'icona della finestra (rimane)
+        icon = resource_manager.get_logo_icon()
+        if not icon.isNull():
+            self.setWindowIcon(icon)
+            QApplication.instance().setWindowIcon(icon)
         
-        try:
-            # Prova diversi percorsi per il logo
-            logo_paths = [
-                "assets/logo.png",
-                "assets/logo_small.png", 
-                "logo.png",
-                "assets/logo.ico"
-            ]
-            
-            for path in logo_paths:
-                try:
-                    icon = QIcon(path)
-                    if not icon.isNull():
-                        self.setWindowIcon(icon)
-                        # Imposta anche l'icona dell'applicazione
-                        QApplication.instance().setWindowIcon(icon)
-                        break
-                except:
-                    continue
-        except Exception as e:
-            print(f"Impossibile caricare il logo: {e}")
-        
-        # Crea una barra di stato
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.statusBar.showMessage("Pronto")
 
-        self.export_tab = ExportTab(self.exporter, self.filter_manager, self.settings)
-        self.config_tab = ConfigTab(self.filter_manager, self.config_manager, self.settings)
-        self.filters_tab = FiltersTab(self.filter_manager, self.settings)
-        
-        # Widget centrale
+        # Widget centrale (direttamente senza header)
         central_widget = QWidget()
         main_layout = QVBoxLayout(central_widget)
         
-        # Crea una barra degli strumenti in alto
+        # Barra degli strumenti (direttamente in alto)
         toolbar_layout = QHBoxLayout()
-        
-        # Selezione del tema
         theme_label = QLabel("Tema:")
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["Sistema", "Chiaro", "Scuro"])
@@ -126,28 +57,22 @@ class MainWindow(QMainWindow):
         toolbar_layout.addWidget(self.theme_combo)
         toolbar_layout.addStretch(1)
         
-        # Aggiungi la barra degli strumenti al layout principale
         main_layout.addLayout(toolbar_layout)
         
-        # Crea il widget con le schede
+        # Schede
         self.tabs = QTabWidget()
-        
-        # Crea le diverse schede
         self.export_tab = ExportTab(self.exporter, self.filter_manager, self.settings)
         self.config_tab = ConfigTab(self.filter_manager, self.config_manager, self.settings)
         self.filters_tab = FiltersTab(self.filter_manager, self.settings)
         
-        # Aggiungi le schede al widget
         self.tabs.addTab(self.export_tab, "Esportazione")
         self.tabs.addTab(self.filters_tab, "Filtri")
         self.tabs.addTab(self.config_tab, "Configurazione")
         
-        # Aggiungi il widget delle schede al layout principale
         main_layout.addWidget(self.tabs)
-        
-        # Imposta il widget centrale
         self.setCentralWidget(central_widget)
-
+        
+        # Collegamenti tra le schede
         self.export_tab.config_tab = self.config_tab
         self.export_tab.filters_tab = self.filters_tab
         self.config_tab.export_tab = self.export_tab
