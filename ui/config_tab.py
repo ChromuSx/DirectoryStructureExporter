@@ -100,6 +100,38 @@ class ConfigTab(QWidget):
         excluded_layout.addLayout(excluded_buttons_layout)
         excluded_dirs_group.setLayout(excluded_layout)
         
+        # Sezione file esclusi - NUOVA
+        excluded_files_group = QGroupBox("File esclusi")
+        excluded_files_layout = QVBoxLayout()
+        self.excluded_files_list = QListWidget()
+        
+        # Popola la lista con i valori attuali
+        for file_name in self.filter_manager.excluded_files:
+            self.excluded_files_list.addItem(file_name)
+        for pattern in self.filter_manager.excluded_files_regex:
+            self.excluded_files_list.addItem(f"[regex] {pattern}")
+        
+        excluded_files_buttons_layout = QHBoxLayout()
+        add_excluded_file_btn = QPushButton("Aggiungi")
+        add_excluded_file_regex_btn = QPushButton("Aggiungi Regex")
+        remove_excluded_file_btn = QPushButton("Rimuovi")
+        regex_help_btn_files = QPushButton("?")
+        
+        add_excluded_file_btn.clicked.connect(self.add_excluded_file)
+        add_excluded_file_regex_btn.clicked.connect(self.add_excluded_file_regex)
+        remove_excluded_file_btn.clicked.connect(self.remove_excluded_file)
+        regex_help_btn_files.setFixedSize(25, 25)
+        regex_help_btn_files.clicked.connect(self.show_regex_help)
+        
+        excluded_files_buttons_layout.addWidget(add_excluded_file_btn)
+        excluded_files_buttons_layout.addWidget(add_excluded_file_regex_btn)
+        excluded_files_buttons_layout.addWidget(remove_excluded_file_btn)
+        excluded_files_buttons_layout.addWidget(regex_help_btn_files)
+        
+        excluded_files_layout.addWidget(self.excluded_files_list)
+        excluded_files_layout.addLayout(excluded_files_buttons_layout)
+        excluded_files_group.setLayout(excluded_files_layout)
+        
         # Sezione estensioni incluse
         included_exts_group = QGroupBox("Estensioni incluse")
         included_layout = QVBoxLayout()
@@ -145,6 +177,7 @@ class ConfigTab(QWidget):
         
         # Aggiunta al layout principale
         layout.addWidget(excluded_dirs_group)
+        layout.addWidget(excluded_files_group)  # NUOVA SEZIONE
         layout.addWidget(included_exts_group)
         layout.addLayout(config_buttons_layout)
 
@@ -291,6 +324,7 @@ class ConfigTab(QWidget):
             <li><b>backup$</b> - Corrisponde a nomi che finiscono con "backup"</li>
             <li><b>^data_\\d+$</b> - Corrisponde a nomi come "data_123", "data_45", ecc.</li>
             <li><b>.*log.*</b> - Corrisponde a qualsiasi nome che contiene "log"</li>
+            <li><b>.*\\.tmp$</b> - Corrisponde a file che finiscono con ".tmp"</li>
         </ul>
         """
         QMessageBox.information(self, "Aiuto Espressioni Regolari", help_text)
@@ -331,6 +365,42 @@ class ConfigTab(QWidget):
                     self.filter_manager.remove_excluded_dir_regex(pattern)
                 else:
                     self.filter_manager.remove_excluded_dir(dir_name)
+    
+    # NUOVI metodi per file esclusi
+    def add_excluded_file(self):
+        file_name, ok = QInputDialog.getText(self, "Aggiungi file", "Nome file (es. .gitignore, thumbs.db):")
+        if ok and file_name:
+            self.excluded_files_list.addItem(file_name)
+            self.filter_manager.add_excluded_file(file_name)
+    
+    def add_excluded_file_regex(self):
+        pattern, ok = QInputDialog.getText(
+            self, 
+            "Aggiungi pattern regex", 
+            "Inserisci un'espressione regolare per escludere i file:"
+        )
+        if ok and pattern:
+            if self.filter_manager.add_excluded_file_regex(pattern):
+                self.excluded_files_list.addItem(f"[regex] {pattern}")
+            else:
+                QMessageBox.warning(
+                    self, 
+                    "Espressione non valida", 
+                    "L'espressione regolare inserita non è valida."
+                )
+    
+    def remove_excluded_file(self):
+        selected_items = self.excluded_files_list.selectedItems()
+        if selected_items:
+            for item in selected_items:
+                file_name = item.text()
+                self.excluded_files_list.takeItem(self.excluded_files_list.row(item))
+                
+                if file_name.startswith("[regex] "):
+                    pattern = file_name[8:]  # Rimuovi il prefisso "[regex] "
+                    self.filter_manager.remove_excluded_file_regex(pattern)
+                else:
+                    self.filter_manager.remove_excluded_file(file_name)
     
     def add_included_ext(self):
         ext, ok = QInputDialog.getText(self, "Aggiungi estensione", "Estensione (con punto iniziale, es. .py):")
@@ -421,14 +491,21 @@ class ConfigTab(QWidget):
     
     def update_config_lists(self):
         """Aggiorna le liste UI con i valori attuali"""
-        # Aggiorniamo la lista delle directory escluse
+        # Directory escluse
         self.excluded_dirs_list.clear()
         for dir_name in self.filter_manager.excluded_dirs:
             self.excluded_dirs_list.addItem(dir_name)
         for pattern in self.filter_manager.excluded_dirs_regex:
             self.excluded_dirs_list.addItem(f"[regex] {pattern}")
         
-        # Aggiorniamo la lista delle estensioni incluse
+        # File esclusi - NUOVO
+        self.excluded_files_list.clear()
+        for file_name in self.filter_manager.excluded_files:
+            self.excluded_files_list.addItem(file_name)
+        for pattern in self.filter_manager.excluded_files_regex:
+            self.excluded_files_list.addItem(f"[regex] {pattern}")
+        
+        # Estensioni incluse
         self.included_exts_list.clear()
         for ext in self.filter_manager.included_file_extensions:
             self.included_exts_list.addItem(ext)
@@ -437,16 +514,17 @@ class ConfigTab(QWidget):
     
     def save_settings(self):
         """Salva le impostazioni della scheda"""
-        # Salva la configurazione di directory escluse ed estensioni incluse
         self.settings.setValue("excluded_dirs", list(self.filter_manager.excluded_dirs))
         self.settings.setValue("excluded_dirs_regex", list(self.filter_manager.excluded_dirs_regex))
+        self.settings.setValue("excluded_files", list(self.filter_manager.excluded_files))  # NUOVO
+        self.settings.setValue("excluded_files_regex", list(self.filter_manager.excluded_files_regex))  # NUOVO
         self.settings.setValue("included_extensions", list(self.filter_manager.included_file_extensions))
         self.settings.setValue("included_file_regex", list(self.filter_manager.included_file_regex))
         self.settings.setValue("presets_path", self.preset_path_edit.text())
     
     def load_settings(self):
         """Carica le impostazioni della scheda"""
-        # Carica la configurazione di directory escluse ed estensioni incluse
+        # Directory escluse
         excluded_dirs = self.settings.value("excluded_dirs", None)
         if excluded_dirs:
             self.filter_manager.excluded_dirs = set(excluded_dirs)
@@ -454,7 +532,17 @@ class ConfigTab(QWidget):
         excluded_dirs_regex = self.settings.value("excluded_dirs_regex", None)
         if excluded_dirs_regex:
             self.filter_manager.excluded_dirs_regex = set(excluded_dirs_regex)
+        
+        # File esclusi - NUOVO
+        excluded_files = self.settings.value("excluded_files", None)
+        if excluded_files:
+            self.filter_manager.excluded_files = set(excluded_files)
             
+        excluded_files_regex = self.settings.value("excluded_files_regex", None)
+        if excluded_files_regex:
+            self.filter_manager.excluded_files_regex = set(excluded_files_regex)
+            
+        # Estensioni incluse
         included_extensions = self.settings.value("included_extensions", None)
         if included_extensions:
             self.filter_manager.included_file_extensions = set(included_extensions)
