@@ -7,6 +7,7 @@ from PyQt6.QtGui import QColor, QIcon, QPalette
 from ui.export_tab import ExportTab
 from ui.config_tab import ConfigTab
 from ui.filters_tab import FiltersTab
+from utils.resources import resource_manager
 
 class MainWindow(QMainWindow):
     def __init__(self, exporter, filter_manager, config_manager):
@@ -25,12 +26,79 @@ class MainWindow(QMainWindow):
         
         # Carica le impostazioni salvate
         self.load_settings()
+
+    def create_header_with_logo(self):
+        """Crea un header con logo e titolo"""
+        header_widget = QWidget()
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(10, 10, 10, 5)
+        
+        # Logo
+        logo_label = QLabel()
+        pixmap = resource_manager.get_logo_pixmap((48, 48))
+        if not pixmap.isNull():
+            logo_label.setPixmap(pixmap)
+        else:
+            logo_label.setText("📁")  # Fallback emoji
+            logo_label.setStyleSheet("font-size: 32px;")
+        
+        # Titolo dell'applicazione
+        title_label = QLabel("Directory Structure Exporter")
+        title_label.setStyleSheet("""
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #2563eb;
+            margin-left: 10px;
+        """)
+        
+        # Layout header
+        header_layout.addWidget(logo_label)
+        header_layout.addWidget(title_label)
+        header_layout.addStretch(1)
+        
+        return header_widget
     
     def initUI(self):
         """Inizializza l'interfaccia utente"""
         # Imposta il titolo e la dimensione della finestra
         self.setWindowTitle("Directory Structure Exporter")
         self.resize(900, 600)
+
+        # Widget centrale
+        central_widget = QWidget()
+        main_layout = QVBoxLayout(central_widget)
+
+        # AGGIUNTA: Header con logo
+        header = self.create_header_with_logo()
+        main_layout.addWidget(header)
+
+        # Linea separatrice (opzionale)
+        separator = QWidget()
+        separator.setFixedHeight(1)
+        separator.setStyleSheet("background-color: #e5e7eb;")
+        main_layout.addWidget(separator)
+        
+        try:
+            # Prova diversi percorsi per il logo
+            logo_paths = [
+                "assets/logo.png",
+                "assets/logo_small.png", 
+                "logo.png",
+                "assets/logo.ico"
+            ]
+            
+            for path in logo_paths:
+                try:
+                    icon = QIcon(path)
+                    if not icon.isNull():
+                        self.setWindowIcon(icon)
+                        # Imposta anche l'icona dell'applicazione
+                        QApplication.instance().setWindowIcon(icon)
+                        break
+                except:
+                    continue
+        except Exception as e:
+            print(f"Impossibile caricare il logo: {e}")
         
         # Crea una barra di stato
         self.statusBar = QStatusBar()
