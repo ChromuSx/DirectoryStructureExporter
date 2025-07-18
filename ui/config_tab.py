@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
                             QInputDialog, QListWidget, QGroupBox, QFileDialog, QMessageBox, QComboBox)
 import re
+from utils.translation_manager import tr
 
 class ConfigTab(QWidget):
     def __init__(self, filter_manager, config_manager, settings):
@@ -14,23 +15,14 @@ class ConfigTab(QWidget):
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
-        # Sezione directory escluse
-        excluded_dirs_group = QGroupBox("Directory escluse")
-        excluded_layout = QVBoxLayout()
-        self.excluded_dirs_list = QListWidget()
-        
-        # Popola la lista con i valori attuali
-        for dir_name in self.filter_manager.excluded_dirs:
-            self.excluded_dirs_list.addItem(dir_name)
-        for pattern in self.filter_manager.excluded_dirs_regex:
-            self.excluded_dirs_list.addItem(f"[regex] {pattern}")
-        
-        preset_group = QGroupBox("Preset Configurazioni")
+        # Sezione preset configurazioni
+        self.preset_group = QGroupBox(tr("Preset Configurazioni"))
         preset_layout = QVBoxLayout()
         
         # Combo box per selezionare preset esistenti
         preset_selector_layout = QHBoxLayout()
-        preset_selector_layout.addWidget(QLabel("Preset:"))
+        self.preset_label = QLabel(tr("Preset:"))
+        preset_selector_layout.addWidget(self.preset_label)
         self.preset_combo = QComboBox()
         self.preset_combo.setMinimumWidth(200)
         self.update_preset_combo()  # Popoliamo la combo con i preset esistenti
@@ -41,67 +33,76 @@ class ConfigTab(QWidget):
         
         # Pulsanti per gestire i preset
         preset_buttons_layout = QHBoxLayout()
-        save_preset_btn = QPushButton("Salva come nuovo")
-        update_preset_btn = QPushButton("Aggiorna selezionato")
-        delete_preset_btn = QPushButton("Elimina selezionato")
+        self.save_preset_btn = QPushButton(tr("Salva come nuovo"))
+        self.update_preset_btn = QPushButton(tr("Aggiorna selezionato"))
+        self.delete_preset_btn = QPushButton(tr("Elimina selezionato"))
         
-        save_preset_btn.clicked.connect(self.save_new_preset)
-        update_preset_btn.clicked.connect(self.update_current_preset)
-        delete_preset_btn.clicked.connect(self.delete_current_preset)
+        self.save_preset_btn.clicked.connect(self.save_new_preset)
+        self.update_preset_btn.clicked.connect(self.update_current_preset)
+        self.delete_preset_btn.clicked.connect(self.delete_current_preset)
         
-        preset_buttons_layout.addWidget(save_preset_btn)
-        preset_buttons_layout.addWidget(update_preset_btn)
-        preset_buttons_layout.addWidget(delete_preset_btn)
+        preset_buttons_layout.addWidget(self.save_preset_btn)
+        preset_buttons_layout.addWidget(self.update_preset_btn)
+        preset_buttons_layout.addWidget(self.delete_preset_btn)
         
         preset_layout.addLayout(preset_selector_layout)
         preset_layout.addLayout(preset_buttons_layout)
-        preset_group.setLayout(preset_layout)
+        self.preset_group.setLayout(preset_layout)
         
-        preset_path_group = QGroupBox("Percorso File Preset")
+        # Percorso File Preset
+        self.preset_path_group = QGroupBox(tr("Percorso File Preset"))
         preset_path_layout = QHBoxLayout()
 
-        preset_path_layout.addWidget(QLabel("File preset:"))
+        self.preset_file_label = QLabel(tr("File preset:"))
+        preset_path_layout.addWidget(self.preset_file_label)
         self.preset_path_edit = QLineEdit()
         self.preset_path_edit.setText(self.settings.value("presets_path", "presets.json"))
         preset_path_layout.addWidget(self.preset_path_edit, 1)
 
-        browse_preset_path_btn = QPushButton("Sfoglia...")
-        browse_preset_path_btn.clicked.connect(self.browse_preset_path)
-        preset_path_layout.addWidget(browse_preset_path_btn)
+        self.browse_preset_path_btn = QPushButton(tr("Sfoglia..."))
+        self.browse_preset_path_btn.clicked.connect(self.browse_preset_path)
+        preset_path_layout.addWidget(self.browse_preset_path_btn)
 
-        apply_path_btn = QPushButton("Applica")
-        apply_path_btn.clicked.connect(self.apply_preset_path)
-        preset_path_layout.addWidget(apply_path_btn)
+        self.apply_path_btn = QPushButton(tr("Applica"))
+        self.apply_path_btn.clicked.connect(self.apply_preset_path)
+        preset_path_layout.addWidget(self.apply_path_btn)
 
-        preset_path_group.setLayout(preset_path_layout)
-        layout.addWidget(preset_path_group)
-
-        # Aggiungi il gruppo al layout principale
-        layout.addWidget(preset_group)
+        self.preset_path_group.setLayout(preset_path_layout)
+        
+        # Sezione directory escluse
+        self.excluded_dirs_group = QGroupBox(tr("Directory escluse"))
+        excluded_layout = QVBoxLayout()
+        self.excluded_dirs_list = QListWidget()
+        
+        # Popola la lista con i valori attuali
+        for dir_name in self.filter_manager.excluded_dirs:
+            self.excluded_dirs_list.addItem(dir_name)
+        for pattern in self.filter_manager.excluded_dirs_regex:
+            self.excluded_dirs_list.addItem(f"[regex] {pattern}")
 
         excluded_buttons_layout = QHBoxLayout()
-        add_excluded_btn = QPushButton("Aggiungi")
-        add_excluded_regex_btn = QPushButton("Aggiungi Regex")
-        remove_excluded_btn = QPushButton("Rimuovi")
-        regex_help_btn = QPushButton("?")
+        self.add_excluded_btn = QPushButton(tr("Aggiungi"))
+        self.add_excluded_regex_btn = QPushButton(tr("Aggiungi Regex"))
+        self.remove_excluded_btn = QPushButton(tr("Rimuovi"))
+        self.regex_help_btn = QPushButton("?")
         
-        add_excluded_btn.clicked.connect(self.add_excluded_dir)
-        add_excluded_regex_btn.clicked.connect(self.add_excluded_dir_regex)
-        remove_excluded_btn.clicked.connect(self.remove_excluded_dir)
-        regex_help_btn.setFixedSize(25, 25)
-        regex_help_btn.clicked.connect(self.show_regex_help)
+        self.add_excluded_btn.clicked.connect(self.add_excluded_dir)
+        self.add_excluded_regex_btn.clicked.connect(self.add_excluded_dir_regex)
+        self.remove_excluded_btn.clicked.connect(self.remove_excluded_dir)
+        self.regex_help_btn.setFixedSize(25, 25)
+        self.regex_help_btn.clicked.connect(self.show_regex_help)
         
-        excluded_buttons_layout.addWidget(add_excluded_btn)
-        excluded_buttons_layout.addWidget(add_excluded_regex_btn)
-        excluded_buttons_layout.addWidget(remove_excluded_btn)
-        excluded_buttons_layout.addWidget(regex_help_btn)
+        excluded_buttons_layout.addWidget(self.add_excluded_btn)
+        excluded_buttons_layout.addWidget(self.add_excluded_regex_btn)
+        excluded_buttons_layout.addWidget(self.remove_excluded_btn)
+        excluded_buttons_layout.addWidget(self.regex_help_btn)
         
         excluded_layout.addWidget(self.excluded_dirs_list)
         excluded_layout.addLayout(excluded_buttons_layout)
-        excluded_dirs_group.setLayout(excluded_layout)
+        self.excluded_dirs_group.setLayout(excluded_layout)
         
-        # Sezione file esclusi - NUOVA
-        excluded_files_group = QGroupBox("File esclusi")
+        # Sezione file esclusi
+        self.excluded_files_group = QGroupBox(tr("File esclusi"))
         excluded_files_layout = QVBoxLayout()
         self.excluded_files_list = QListWidget()
         
@@ -112,28 +113,28 @@ class ConfigTab(QWidget):
             self.excluded_files_list.addItem(f"[regex] {pattern}")
         
         excluded_files_buttons_layout = QHBoxLayout()
-        add_excluded_file_btn = QPushButton("Aggiungi")
-        add_excluded_file_regex_btn = QPushButton("Aggiungi Regex")
-        remove_excluded_file_btn = QPushButton("Rimuovi")
-        regex_help_btn_files = QPushButton("?")
+        self.add_excluded_file_btn = QPushButton(tr("Aggiungi"))
+        self.add_excluded_file_regex_btn = QPushButton(tr("Aggiungi Regex"))
+        self.remove_excluded_file_btn = QPushButton(tr("Rimuovi"))
+        self.regex_help_btn_files = QPushButton("?")
         
-        add_excluded_file_btn.clicked.connect(self.add_excluded_file)
-        add_excluded_file_regex_btn.clicked.connect(self.add_excluded_file_regex)
-        remove_excluded_file_btn.clicked.connect(self.remove_excluded_file)
-        regex_help_btn_files.setFixedSize(25, 25)
-        regex_help_btn_files.clicked.connect(self.show_regex_help)
+        self.add_excluded_file_btn.clicked.connect(self.add_excluded_file)
+        self.add_excluded_file_regex_btn.clicked.connect(self.add_excluded_file_regex)
+        self.remove_excluded_file_btn.clicked.connect(self.remove_excluded_file)
+        self.regex_help_btn_files.setFixedSize(25, 25)
+        self.regex_help_btn_files.clicked.connect(self.show_regex_help)
         
-        excluded_files_buttons_layout.addWidget(add_excluded_file_btn)
-        excluded_files_buttons_layout.addWidget(add_excluded_file_regex_btn)
-        excluded_files_buttons_layout.addWidget(remove_excluded_file_btn)
-        excluded_files_buttons_layout.addWidget(regex_help_btn_files)
+        excluded_files_buttons_layout.addWidget(self.add_excluded_file_btn)
+        excluded_files_buttons_layout.addWidget(self.add_excluded_file_regex_btn)
+        excluded_files_buttons_layout.addWidget(self.remove_excluded_file_btn)
+        excluded_files_buttons_layout.addWidget(self.regex_help_btn_files)
         
         excluded_files_layout.addWidget(self.excluded_files_list)
         excluded_files_layout.addLayout(excluded_files_buttons_layout)
-        excluded_files_group.setLayout(excluded_files_layout)
+        self.excluded_files_group.setLayout(excluded_files_layout)
         
         # Sezione estensioni incluse
-        included_exts_group = QGroupBox("Estensioni incluse")
+        self.included_exts_group = QGroupBox(tr("Estensioni incluse"))
         included_layout = QVBoxLayout()
         self.included_exts_list = QListWidget()
         
@@ -144,120 +145,93 @@ class ConfigTab(QWidget):
             self.included_exts_list.addItem(f"[regex] {pattern}")
         
         included_buttons_layout = QHBoxLayout()
-        add_included_btn = QPushButton("Aggiungi")
-        add_included_regex_btn = QPushButton("Aggiungi Regex") 
-        remove_included_btn = QPushButton("Rimuovi")
-        regex_help_btn_ext = QPushButton("?")
+        self.add_included_btn = QPushButton(tr("Aggiungi"))
+        self.add_included_regex_btn = QPushButton(tr("Aggiungi Regex")) 
+        self.remove_included_btn = QPushButton(tr("Rimuovi"))
+        self.regex_help_btn_ext = QPushButton("?")
         
-        add_included_btn.clicked.connect(self.add_included_ext)
-        add_included_regex_btn.clicked.connect(self.add_included_ext_regex)
-        remove_included_btn.clicked.connect(self.remove_included_ext)
-        regex_help_btn_ext.setFixedSize(25, 25)
-        regex_help_btn_ext.clicked.connect(self.show_regex_help)
+        self.add_included_btn.clicked.connect(self.add_included_ext)
+        self.add_included_regex_btn.clicked.connect(self.add_included_ext_regex)
+        self.remove_included_btn.clicked.connect(self.remove_included_ext)
+        self.regex_help_btn_ext.setFixedSize(25, 25)
+        self.regex_help_btn_ext.clicked.connect(self.show_regex_help)
         
-        included_buttons_layout.addWidget(add_included_btn)
-        included_buttons_layout.addWidget(add_included_regex_btn)
-        included_buttons_layout.addWidget(remove_included_btn)
-        included_buttons_layout.addWidget(regex_help_btn_ext)
+        included_buttons_layout.addWidget(self.add_included_btn)
+        included_buttons_layout.addWidget(self.add_included_regex_btn)
+        included_buttons_layout.addWidget(self.remove_included_btn)
+        included_buttons_layout.addWidget(self.regex_help_btn_ext)
         
         included_layout.addWidget(self.included_exts_list)
         included_layout.addLayout(included_buttons_layout)
-        included_exts_group.setLayout(included_layout)
+        self.included_exts_group.setLayout(included_layout)
         
         # Pulsanti per salvare/caricare configurazione
         config_buttons_layout = QHBoxLayout()
-        save_config_btn = QPushButton("Salva configurazione")
-        load_config_btn = QPushButton("Carica configurazione")
+        self.save_config_btn = QPushButton(tr("Salva configurazione"))
+        self.load_config_btn = QPushButton(tr("Carica configurazione"))
         
-        save_config_btn.clicked.connect(self.save_config)
-        load_config_btn.clicked.connect(self.load_config)
+        self.save_config_btn.clicked.connect(self.save_config)
+        self.load_config_btn.clicked.connect(self.load_config)
         
-        config_buttons_layout.addWidget(save_config_btn)
-        config_buttons_layout.addWidget(load_config_btn)
+        config_buttons_layout.addWidget(self.save_config_btn)
+        config_buttons_layout.addWidget(self.load_config_btn)
         
         # Aggiunta al layout principale
-        layout.addWidget(excluded_dirs_group)
-        layout.addWidget(excluded_files_group)  # NUOVA SEZIONE
-        layout.addWidget(included_exts_group)
+        layout.addWidget(self.preset_path_group)
+        layout.addWidget(self.preset_group)
+        layout.addWidget(self.excluded_dirs_group)
+        layout.addWidget(self.excluded_files_group)
+        layout.addWidget(self.included_exts_group)
         layout.addLayout(config_buttons_layout)
 
     def retranslate_ui(self):
         """Aggiorna tutte le traduzioni dell'interfaccia"""
-        from utils.translation_manager import tr
-        
         # Aggiorna i titoli dei gruppi
-        for i in range(self.layout().count()):
-            widget = self.layout().itemAt(i).widget()
-            if hasattr(widget, 'setTitle'):
-                if 'directory escluse' in widget.title().lower() or 'excluded directories' in widget.title().lower():
-                    widget.setTitle(tr("Directory escluse"))
-                elif 'file esclusi' in widget.title().lower() or 'excluded files' in widget.title().lower():
-                    widget.setTitle(tr("File esclusi"))
-                elif 'estensioni incluse' in widget.title().lower() or 'included extensions' in widget.title().lower():
-                    widget.setTitle(tr("Estensioni incluse"))
-                elif 'preset' in widget.title().lower():
-                    widget.setTitle(tr("Preset Configurazioni"))
-                elif 'percorso' in widget.title().lower() or 'path' in widget.title().lower():
-                    widget.setTitle(tr("Percorso File Preset"))
+        self.preset_path_group.setTitle(tr("Percorso File Preset"))
+        self.preset_group.setTitle(tr("Preset Configurazioni"))
+        self.excluded_dirs_group.setTitle(tr("Directory escluse"))
+        self.excluded_files_group.setTitle(tr("File esclusi"))
+        self.included_exts_group.setTitle(tr("Estensioni incluse"))
         
         # Aggiorna le etichette
-        if hasattr(self, 'preset_path_edit'):
-            # Trova e aggiorna le etichette nei layout
-            self._update_labels_in_widget(self)
+        self.preset_file_label.setText(tr("File preset:"))
+        self.preset_label.setText(tr("Preset:"))
         
         # Aggiorna i pulsanti
-        self._update_buttons_in_widget(self)
+        self.browse_preset_path_btn.setText(tr("Sfoglia..."))
+        self.apply_path_btn.setText(tr("Applica"))
+        self.save_preset_btn.setText(tr("Salva come nuovo"))
+        self.update_preset_btn.setText(tr("Aggiorna selezionato"))
+        self.delete_preset_btn.setText(tr("Elimina selezionato"))
+        
+        # Directory escluse
+        self.add_excluded_btn.setText(tr("Aggiungi"))
+        self.add_excluded_regex_btn.setText(tr("Aggiungi Regex"))
+        self.remove_excluded_btn.setText(tr("Rimuovi"))
+        
+        # File esclusi
+        self.add_excluded_file_btn.setText(tr("Aggiungi"))
+        self.add_excluded_file_regex_btn.setText(tr("Aggiungi Regex"))
+        self.remove_excluded_file_btn.setText(tr("Rimuovi"))
+        
+        # Estensioni incluse
+        self.add_included_btn.setText(tr("Aggiungi"))
+        self.add_included_regex_btn.setText(tr("Aggiungi Regex"))
+        self.remove_included_btn.setText(tr("Rimuovi"))
+        
+        # Configurazione
+        self.save_config_btn.setText(tr("Salva configurazione"))
+        self.load_config_btn.setText(tr("Carica configurazione"))
         
         # Aggiorna la combo dei preset
-        if hasattr(self, 'preset_combo'):
-            current_index = self.preset_combo.currentIndex()
-            if current_index == 0:
-                self.preset_combo.setItemText(0, tr("-- Seleziona un preset --"))
-
-    def _update_labels_in_widget(self, widget):
-        """Aggiorna ricorsivamente le etichette in un widget"""
-        from utils.translation_manager import tr
-        from PyQt6.QtWidgets import QLabel
-        
-        for child in widget.findChildren(QLabel):
-            text = child.text()
-            if 'file preset' in text.lower() or 'preset file' in text.lower():
-                child.setText(tr("File preset:"))
-            elif 'preset:' in text.lower():
-                child.setText(tr("Preset:"))
-
-    def _update_buttons_in_widget(self, widget):
-        """Aggiorna ricorsivamente i pulsanti in un widget"""
-        from utils.translation_manager import tr
-        from PyQt6.QtWidgets import QPushButton
-        
-        for child in widget.findChildren(QPushButton):
-            text = child.text()
-            if 'sfoglia' in text.lower() or 'browse' in text.lower():
-                child.setText(tr("Sfoglia..."))
-            elif 'applica' in text.lower() or 'apply' in text.lower():
-                child.setText(tr("Applica"))
-            elif 'salva come nuovo' in text.lower() or 'save as new' in text.lower():
-                child.setText(tr("Salva come nuovo"))
-            elif 'aggiorna selezionato' in text.lower() or 'update selected' in text.lower():
-                child.setText(tr("Aggiorna selezionato"))
-            elif 'elimina selezionato' in text.lower() or 'delete selected' in text.lower():
-                child.setText(tr("Elimina selezionato"))
-            elif 'aggiungi regex' in text.lower() or 'add regex' in text.lower():
-                child.setText(tr("Aggiungi Regex"))
-            elif 'aggiungi' in text.lower() or 'add' == text.lower():
-                child.setText(tr("Aggiungi"))
-            elif 'rimuovi' in text.lower() or 'remove' in text.lower():
-                child.setText(tr("Rimuovi"))
-            elif 'salva configurazione' in text.lower() or 'save configuration' in text.lower():
-                child.setText(tr("Salva configurazione"))
-            elif 'carica configurazione' in text.lower() or 'load configuration' in text.lower():
-                child.setText(tr("Carica configurazione"))
+        current_index = self.preset_combo.currentIndex()
+        if current_index == 0:
+            self.preset_combo.setItemText(0, tr("-- Seleziona un preset --"))
 
     def browse_preset_path(self):
         """Permette all'utente di scegliere il percorso del file dei preset"""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Imposta file preset", self.preset_path_edit.text(), "File JSON (*.json)"
+            self, tr("Imposta file preset"), self.preset_path_edit.text(), "File JSON (*.json)"
         )
         
         if file_path:
@@ -272,19 +246,19 @@ class ConfigTab(QWidget):
             # Chiedi conferma
             if QMessageBox.question(
                 self, 
-                "Cambiare percorso preset", 
-                f"Vuoi spostare i preset in '{new_path}'?\nI preset attuali verranno copiati nel nuovo percorso.",
+                tr("Cambiare percorso preset"), 
+                tr("Vuoi spostare i preset in") + f" '{new_path}'?\n" + tr("I preset attuali verranno copiati nel nuovo percorso."),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             ) == QMessageBox.StandardButton.Yes:
                 # Salva i preset attuali nel nuovo percorso
                 self.settings.setValue("presets_path", new_path)
                 self.config_manager.save_presets(new_path)
-                self.window().statusBar.showMessage(f"Percorso preset impostato: {new_path}", 3000)
+                self.window().statusBar.showMessage(tr("Percorso preset impostato:") + f" {new_path}", 3000)
 
     def update_preset_combo(self):
         """Aggiorna la combo box con i preset disponibili"""
         self.preset_combo.clear()
-        self.preset_combo.addItem("-- Seleziona un preset --")
+        self.preset_combo.addItem(tr("-- Seleziona un preset --"))
         preset_names = self.config_manager.get_filter_preset_names()
         for name in sorted(preset_names):
             self.preset_combo.addItem(name)
@@ -311,20 +285,20 @@ class ConfigTab(QWidget):
                 
             self.window().statusBar.showMessage(message, 3000)
         else:
-            QMessageBox.warning(self, "Errore", message)
+            QMessageBox.warning(self, tr("Errore"), message)
 
     def save_new_preset(self):
         """Salva la configurazione corrente come nuovo preset"""
         preset_name, ok = QInputDialog.getText(
-            self, "Salva Preset", "Nome del preset:"
+            self, tr("Salva Preset"), tr("Nome del preset:")
         )
         if ok and preset_name:
             # Verifica se esiste già
             if preset_name in self.config_manager.get_filter_preset_names():
                 if QMessageBox.question(
                     self, 
-                    "Preset esistente", 
-                    f"Il preset '{preset_name}' esiste già. Sovrascrivere?",
+                    tr("Preset esistente"), 
+                    tr("Il preset") + f" '{preset_name}' " + tr("esiste già. Sovrascrivere?"),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                 ) == QMessageBox.StandardButton.No:
                     return
@@ -340,13 +314,13 @@ class ConfigTab(QWidget):
                     self.preset_combo.setCurrentIndex(index)
                 self.window().statusBar.showMessage(message, 3000)
             else:
-                QMessageBox.warning(self, "Errore", message)
+                QMessageBox.warning(self, tr("Errore"), message)
 
     def update_current_preset(self):
         """Aggiorna il preset selezionato con la configurazione corrente"""
         index = self.preset_combo.currentIndex()
         if index <= 0:
-            QMessageBox.warning(self, "Nessun preset selezionato", "Seleziona prima un preset da aggiornare.")
+            QMessageBox.warning(self, tr("Nessun preset selezionato"), tr("Seleziona prima un preset da aggiornare."))
             return
             
         preset_name = self.preset_combo.currentText()
@@ -354,21 +328,21 @@ class ConfigTab(QWidget):
         # Chiedi conferma
         if QMessageBox.question(
             self, 
-            "Aggiorna preset", 
-            f"Sei sicuro di voler aggiornare il preset '{preset_name}'?",
+            tr("Aggiorna preset"), 
+            tr("Sei sicuro di voler aggiornare il preset") + f" '{preset_name}'?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         ) == QMessageBox.StandardButton.Yes:
             success, message = self.config_manager.save_filter_preset(preset_name)
             if success:
                 self.window().statusBar.showMessage(message, 3000)
             else:
-                QMessageBox.warning(self, "Errore", message)
+                QMessageBox.warning(self, tr("Errore"), message)
 
     def delete_current_preset(self):
         """Elimina il preset selezionato"""
         index = self.preset_combo.currentIndex()
         if index <= 0:
-            QMessageBox.warning(self, "Nessun preset selezionato", "Seleziona prima un preset da eliminare.")
+            QMessageBox.warning(self, tr("Nessun preset selezionato"), tr("Seleziona prima un preset da eliminare."))
             return
             
         preset_name = self.preset_combo.currentText()
@@ -376,8 +350,8 @@ class ConfigTab(QWidget):
         # Chiedi conferma
         if QMessageBox.question(
             self, 
-            "Elimina preset", 
-            f"Sei sicuro di voler eliminare il preset '{preset_name}'?",
+            tr("Elimina preset"), 
+            tr("Sei sicuro di voler eliminare il preset") + f" '{preset_name}'?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         ) == QMessageBox.StandardButton.Yes:
             success, message = self.config_manager.delete_filter_preset(preset_name)
@@ -386,24 +360,24 @@ class ConfigTab(QWidget):
                 self.preset_combo.setCurrentIndex(0)  # Resetta la selezione
                 self.window().statusBar.showMessage(message, 3000)
             else:
-                QMessageBox.warning(self, "Errore", message)
+                QMessageBox.warning(self, tr("Errore"), message)
     
     def show_regex_help(self):
-        help_text = """
-        <h3>Guida alle Espressioni Regolari</h3>
-        <p>Esempi di pattern comuni:</p>
+        help_text = f"""
+        <h3>{tr("Guida alle Espressioni Regolari")}</h3>
+        <p>{tr("Esempi di pattern comuni:")}</p>
         <ul>
-            <li><b>^temp</b> - Corrisponde a nomi che iniziano con "temp"</li>
-            <li><b>backup$</b> - Corrisponde a nomi che finiscono con "backup"</li>
-            <li><b>^data_\\d+$</b> - Corrisponde a nomi come "data_123", "data_45", ecc.</li>
-            <li><b>.*log.*</b> - Corrisponde a qualsiasi nome che contiene "log"</li>
-            <li><b>.*\\.tmp$</b> - Corrisponde a file che finiscono con ".tmp"</li>
+            <li><b>^temp</b> - {tr("Corrisponde a nomi che iniziano con")} "temp"</li>
+            <li><b>backup$</b> - {tr("Corrisponde a nomi che finiscono con")} "backup"</li>
+            <li><b>^data_\\d+$</b> - {tr("Corrisponde a nomi come")} "data_123", "data_45", {tr("ecc.")}</li>
+            <li><b>.*log.*</b> - {tr("Corrisponde a qualsiasi nome che contiene")} "log"</li>
+            <li><b>.*\\.tmp$</b> - {tr("Corrisponde a file che finiscono con")} ".tmp"</li>
         </ul>
         """
-        QMessageBox.information(self, "Aiuto Espressioni Regolari", help_text)
+        QMessageBox.information(self, tr("Aiuto Espressioni Regolari"), help_text)
     
     def add_excluded_dir(self):
-        dir_name, ok = QInputDialog.getText(self, "Aggiungi directory", "Nome directory:")
+        dir_name, ok = QInputDialog.getText(self, tr("Aggiungi directory"), tr("Nome directory:"))
         if ok and dir_name:
             self.excluded_dirs_list.addItem(dir_name)
             self.filter_manager.add_excluded_dir(dir_name)
@@ -411,8 +385,8 @@ class ConfigTab(QWidget):
     def add_excluded_dir_regex(self):
         pattern, ok = QInputDialog.getText(
             self, 
-            "Aggiungi pattern regex", 
-            "Inserisci un'espressione regolare per escludere le directory:"
+            tr("Aggiungi pattern regex"), 
+            tr("Inserisci un'espressione regolare per escludere le directory:")
         )
         if ok and pattern:
             if self.filter_manager.add_excluded_dir_regex(pattern):
@@ -421,8 +395,8 @@ class ConfigTab(QWidget):
             else:
                 QMessageBox.warning(
                     self, 
-                    "Espressione non valida", 
-                    "L'espressione regolare inserita non è valida."
+                    tr("Espressione non valida"), 
+                    tr("L'espressione regolare inserita non è valida.")
                 )
     
     def remove_excluded_dir(self):
@@ -439,9 +413,8 @@ class ConfigTab(QWidget):
                 else:
                     self.filter_manager.remove_excluded_dir(dir_name)
     
-    # NUOVI metodi per file esclusi
     def add_excluded_file(self):
-        file_name, ok = QInputDialog.getText(self, "Aggiungi file", "Nome file (es. .gitignore, thumbs.db):")
+        file_name, ok = QInputDialog.getText(self, tr("Aggiungi file"), tr("Nome file (es. .gitignore, thumbs.db):"))
         if ok and file_name:
             self.excluded_files_list.addItem(file_name)
             self.filter_manager.add_excluded_file(file_name)
@@ -449,8 +422,8 @@ class ConfigTab(QWidget):
     def add_excluded_file_regex(self):
         pattern, ok = QInputDialog.getText(
             self, 
-            "Aggiungi pattern regex", 
-            "Inserisci un'espressione regolare per escludere i file:"
+            tr("Aggiungi pattern regex"), 
+            tr("Inserisci un'espressione regolare per escludere i file:")
         )
         if ok and pattern:
             if self.filter_manager.add_excluded_file_regex(pattern):
@@ -458,8 +431,8 @@ class ConfigTab(QWidget):
             else:
                 QMessageBox.warning(
                     self, 
-                    "Espressione non valida", 
-                    "L'espressione regolare inserita non è valida."
+                    tr("Espressione non valida"), 
+                    tr("L'espressione regolare inserita non è valida.")
                 )
     
     def remove_excluded_file(self):
@@ -476,7 +449,7 @@ class ConfigTab(QWidget):
                     self.filter_manager.remove_excluded_file(file_name)
     
     def add_included_ext(self):
-        ext, ok = QInputDialog.getText(self, "Aggiungi estensione", "Estensione (con punto iniziale, es. .py):")
+        ext, ok = QInputDialog.getText(self, tr("Aggiungi estensione"), tr("Estensione (con punto iniziale, es. .py):"))
         if ok and ext:
             if not ext.startswith('.'):
                 ext = f".{ext}"
@@ -486,8 +459,8 @@ class ConfigTab(QWidget):
     def add_included_ext_regex(self):
         pattern, ok = QInputDialog.getText(
             self, 
-            "Aggiungi pattern regex", 
-            "Inserisci un'espressione regolare per includere i file:"
+            tr("Aggiungi pattern regex"), 
+            tr("Inserisci un'espressione regolare per includere i file:")
         )
         if ok and pattern:
             if self.filter_manager.add_included_file_regex(pattern):
@@ -496,8 +469,8 @@ class ConfigTab(QWidget):
             else:
                 QMessageBox.warning(
                     self, 
-                    "Espressione non valida", 
-                    "L'espressione regolare inserita non è valida."
+                    tr("Espressione non valida"), 
+                    tr("L'espressione regolare inserita non è valida.")
                 )
     
     def remove_included_ext(self):
@@ -517,7 +490,7 @@ class ConfigTab(QWidget):
     def save_config(self):
         """Salva la configurazione corrente in un file JSON"""
         config_file, _ = QFileDialog.getSaveFileName(
-            self, "Salva Configurazione", "", "File JSON (*.json)"
+            self, tr("Salva Configurazione"), "", "File JSON (*.json)"
         )
         
         if not config_file:
@@ -529,12 +502,12 @@ class ConfigTab(QWidget):
         if success:
             self.window().statusBar.showMessage(message, 3000)
         else:
-            QMessageBox.warning(self, "Errore", message)
+            QMessageBox.warning(self, tr("Errore"), message)
     
     def load_config(self):
         """Carica la configurazione da un file JSON"""
         config_file, _ = QFileDialog.getOpenFileName(
-            self, "Carica Configurazione", "", "File JSON (*.json)"
+            self, tr("Carica Configurazione"), "", "File JSON (*.json)"
         )
         
         if not config_file:
@@ -560,7 +533,7 @@ class ConfigTab(QWidget):
                 
             self.window().statusBar.showMessage(message, 3000)
         else:
-            QMessageBox.warning(self, "Errore", message)
+            QMessageBox.warning(self, tr("Errore"), message)
     
     def update_config_lists(self):
         """Aggiorna le liste UI con i valori attuali"""
@@ -571,7 +544,7 @@ class ConfigTab(QWidget):
         for pattern in self.filter_manager.excluded_dirs_regex:
             self.excluded_dirs_list.addItem(f"[regex] {pattern}")
         
-        # File esclusi - NUOVO
+        # File esclusi
         self.excluded_files_list.clear()
         for file_name in self.filter_manager.excluded_files:
             self.excluded_files_list.addItem(file_name)
@@ -589,8 +562,8 @@ class ConfigTab(QWidget):
         """Salva le impostazioni della scheda"""
         self.settings.setValue("excluded_dirs", list(self.filter_manager.excluded_dirs))
         self.settings.setValue("excluded_dirs_regex", list(self.filter_manager.excluded_dirs_regex))
-        self.settings.setValue("excluded_files", list(self.filter_manager.excluded_files))  # NUOVO
-        self.settings.setValue("excluded_files_regex", list(self.filter_manager.excluded_files_regex))  # NUOVO
+        self.settings.setValue("excluded_files", list(self.filter_manager.excluded_files))
+        self.settings.setValue("excluded_files_regex", list(self.filter_manager.excluded_files_regex))
         self.settings.setValue("included_extensions", list(self.filter_manager.included_file_extensions))
         self.settings.setValue("included_file_regex", list(self.filter_manager.included_file_regex))
         self.settings.setValue("presets_path", self.preset_path_edit.text())
@@ -606,7 +579,7 @@ class ConfigTab(QWidget):
         if excluded_dirs_regex:
             self.filter_manager.excluded_dirs_regex = set(excluded_dirs_regex)
         
-        # File esclusi - NUOVO
+        # File esclusi
         excluded_files = self.settings.value("excluded_files", None)
         if excluded_files:
             self.filter_manager.excluded_files = set(excluded_files)

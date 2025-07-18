@@ -11,11 +11,11 @@
   "Errore": "Error",
   "Errore nel caricamento della lingua selezionata.": "Error al cargar el idioma seleccionado.",
   "Lingua cambiata in": "Idioma cambiado a",
-  
+
   "Esportazione": "Exportación",
   "Filtri": "Filtros",
   "Configurazione": "Configuración",
-  
+
   "Selezione Directory": "Selección de Directorio",
   "Directory:": "Directorio:",
   "Sfoglia...": "Examinar...",
@@ -40,7 +40,7 @@
   "File": "Archivo",
   "Caricamento": "Cargando",
   "Accesso negato": "Acceso denegado",
-  
+
   "Espandi tutto": "Expandir todo",
   "Comprimi tutto": "Contraer todo",
   "Apri in Esplora risorse": "Abrir en Explorador de archivos",
@@ -48,7 +48,7 @@
   "Apri cartella contenitore": "Abrir carpeta contenedora",
   "Copia percorso": "Copiar ruta",
   "Percorso copiato:": "Ruta copiada:",
-  
+
   "Seleziona Directory": "Seleccionar Directorio",
   "Salva File": "Guardar Archivo",
   "Seleziona directory e file di output.": "Selecciona directorio y archivo de salida.",
@@ -58,7 +58,7 @@
   "Errore durante l'esportazione:": "Error durante la exportación:",
   "Struttura caricata:": "Estructura cargada:",
   "Directory caricata:": "Directorio cargado:",
-  
+
   "Filtri dimensione file": "Filtros de Tamaño de Archivo",
   "Dimensione minima (bytes):": "Tamaño mínimo (bytes):",
   "Dimensione massima (bytes):": "Tamaño máximo (bytes):",
@@ -74,7 +74,7 @@
   "I filtri sono stati applicati con successo.": "Los filtros se han aplicado con éxito.",
   "Filtri reimpostati": "Filtros restablecidos",
   "I filtri sono stati reimpostati ai valori predefiniti.": "Los filtros se han restablecido a los valores predeterminados.",
-  
+
   "Directory escluse": "Directorios Excluidos",
   "File esclusi": "Archivos Excluidos",
   "Estensioni incluse": "Extensiones Incluidas",
@@ -105,5 +105,24 @@
   "Inserisci un'espressione regolare per escludere i file:": "Ingresa una expresión regular para excluir archivos:",
   "Aggiungi estensione": "Agregar extensión",
   "Estensione (con punto iniziale, es. .py):": "Extensión (con punto inicial, ej. .py):",
-  "Inserisci un'espressione regolare per includere i file:": "Ingresa una expresión regular para incluir archivos:"
+  "Inserisci un'espressione regolare per includere i file:": "Ingresa una expresión regular para incluir archivos:",
+
+  "Filtri applicati con successo": "Filtros aplicados con éxito",
+  "Imposta file preset": "Establecer archivo preset",
+  "Cambiare percorso preset": "Cambiar ruta preset",
+  "Vuoi spostare i preset in": "¿Quieres mover los presets a",
+  "I preset attuali verranno copiati nel nuovo percorso.": "Los presets actuales se copiarán a la nueva ruta.",
+  "Percorso preset impostato:": "Ruta preset establecida:",
+  "Nome del preset:": "Nombre del preset:",
+  "Il preset": "El preset",
+  "esiste già. Sovrascrivere?": "ya existe. ¿Sobrescribir?",
+  "Sei sicuro di voler aggiornare il preset": "¿Estás seguro de que quieres actualizar el preset",
+  "Sei sicuro di voler eliminare il preset": "¿Estás seguro de que quieres eliminar el preset",
+  "Esempi di pattern comuni:": "Ejemplos de patrones comunes:",
+  "Corrisponde a nomi che iniziano con": "Coincide con nombres que comienzan con",
+  "Corrisponde a nomi che finiscono con": "Coincide con nombres que terminan con",
+  "Corrisponde a nomi come": "Coincide con nombres como",
+  "ecc.": "etc.",
+  "Corrisponde a qualsiasi nome che contiene": "Coincide con cualquier nombre que contenga",
+  "Corrisponde a file che finiscono con": "Coincide con archivos que terminan con"
 }

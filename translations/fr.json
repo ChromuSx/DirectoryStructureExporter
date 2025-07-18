@@ -11,11 +11,11 @@
   "Errore": "Erreur",
   "Errore nel caricamento della lingua selezionata.": "Erreur lors du chargement de la langue sélectionnée.",
   "Lingua cambiata in": "Langue changée en",
-  
+
   "Esportazione": "Exportation",
   "Filtri": "Filtres",
   "Configurazione": "Configuration",
-  
+
   "Selezione Directory": "Sélection de Répertoire",
   "Directory:": "Répertoire:",
   "Sfoglia...": "Parcourir...",
@@ -40,7 +40,7 @@
   "File": "Fichier",
   "Caricamento": "Chargement",
   "Accesso negato": "Accès refusé",
-  
+
   "Espandi tutto": "Développer tout",
   "Comprimi tutto": "Réduire tout",
   "Apri in Esplora risorse": "Ouvrir dans l'Explorateur",
@@ -48,7 +48,7 @@
   "Apri cartella contenitore": "Ouvrir dossier parent",
   "Copia percorso": "Copier chemin",
   "Percorso copiato:": "Chemin copié:",
-  
+
   "Seleziona Directory": "Sélectionner Répertoire",
   "Salva File": "Enregistrer Fichier",
   "Seleziona directory e file di output.": "Sélectionnez répertoire et fichier de sortie.",
@@ -58,7 +58,7 @@
   "Errore durante l'esportazione:": "Erreur pendant l'exportation:",
   "Struttura caricata:": "Structure chargée:",
   "Directory caricata:": "Répertoire chargé:",
-  
+
   "Filtri dimensione file": "Filtres de Taille de Fichier",
   "Dimensione minima (bytes):": "Taille minimale (octets):",
   "Dimensione massima (bytes):": "Taille maximale (octets):",
@@ -74,7 +74,7 @@
   "I filtri sono stati applicati con successo.": "Les filtres ont été appliqués avec succès.",
   "Filtri reimpostati": "Filtres réinitialisés",
   "I filtri sono stati reimpostati ai valori predefiniti.": "Les filtres ont été réinitialisés aux valeurs par défaut.",
-  
+
   "Directory escluse": "Répertoires Exclus",
   "File esclusi": "Fichiers Exclus",
   "Estensioni incluse": "Extensions Incluses",
@@ -105,5 +105,24 @@
   "Inserisci un'espressione regolare per escludere i file:": "Entrez une expression régulière pour exclure les fichiers:",
   "Aggiungi estensione": "Ajouter extension",
   "Estensione (con punto iniziale, es. .py):": "Extension (avec point initial, ex. .py):",
-  "Inserisci un'espressione regolare per includere i file:": "Entrez une expression régulière pour inclure les fichiers:"
+  "Inserisci un'espressione regolare per includere i file:": "Entrez une expression régulière pour inclure les fichiers:",
+
+  "Filtri applicati con successo": "Filtres appliqués avec succès",
+  "Imposta file preset": "Définir fichier preset",
+  "Cambiare percorso preset": "Changer chemin preset",
+  "Vuoi spostare i preset in": "Voulez-vous déplacer les presets vers",
+  "I preset attuali verranno copiati nel nuovo percorso.": "Les presets actuels seront copiés vers le nouveau chemin.",
+  "Percorso preset impostato:": "Chemin preset défini:",
+  "Nome del preset:": "Nom du preset:",
+  "Il preset": "Le preset",
+  "esiste già. Sovrascrivere?": "existe déjà. Écraser?",
+  "Sei sicuro di voler aggiornare il preset": "Êtes-vous sûr de vouloir mettre à jour le preset",
+  "Sei sicuro di voler eliminare il preset": "Êtes-vous sûr de vouloir supprimer le preset",
+  "Esempi di pattern comuni:": "Exemples de motifs courants:",
+  "Corrisponde a nomi che iniziano con": "Correspond aux noms commençant par",
+  "Corrisponde a nomi che finiscono con": "Correspond aux noms se terminant par",
+  "Corrisponde a nomi come": "Correspond aux noms comme",
+  "ecc.": "etc.",
+  "Corrisponde a qualsiasi nome che contiene": "Correspond à tout nom contenant",
+  "Corrisponde a file che finiscono con": "Correspond aux fichiers se terminant par"
 }

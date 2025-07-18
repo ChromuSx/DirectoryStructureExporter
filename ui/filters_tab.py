@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushBut
                             QDateTimeEdit, QSpinBox, QMessageBox)
 from PyQt6.QtCore import Qt, QDateTime
 import datetime
+from utils.translation_manager import tr
 
 class FiltersTab(QWidget):
     def __init__(self, filter_manager, settings):
@@ -17,165 +18,127 @@ class FiltersTab(QWidget):
         layout = QVBoxLayout(self)
         
         # Gruppo dimensione file
-        size_group = QGroupBox("Filtri dimensione file")
+        self.size_group = QGroupBox(tr("Filtri dimensione file"))
         size_layout = QVBoxLayout()
         
         size_min_layout = QHBoxLayout()
-        size_min_layout.addWidget(QLabel("Dimensione minima (bytes):"))
+        self.min_size_label = QLabel(tr("Dimensione minima (bytes):"))
+        size_min_layout.addWidget(self.min_size_label)
         self.min_size_spin = QSpinBox()
         self.min_size_spin.setRange(0, 1000000000)  # Da 0 a 1 GB
         self.min_size_spin.setValue(0)
         size_min_layout.addWidget(self.min_size_spin)
         
         size_max_layout = QHBoxLayout()
-        size_max_layout.addWidget(QLabel("Dimensione massima (bytes):"))
+        self.max_size_label = QLabel(tr("Dimensione massima (bytes):"))
+        size_max_layout.addWidget(self.max_size_label)
         self.max_size_spin = QSpinBox()
         self.max_size_spin.setRange(0, 1000000000)  # Da 0 a 1 GB
         self.max_size_spin.setValue(0)
-        self.max_size_spin.setSpecialValueText("Illimitato")
+        self.max_size_spin.setSpecialValueText(tr("Illimitato"))
         size_max_layout.addWidget(self.max_size_spin)
         
         size_layout.addLayout(size_min_layout)
         size_layout.addLayout(size_max_layout)
-        size_group.setLayout(size_layout)
+        self.size_group.setLayout(size_layout)
         
         # Gruppo data di creazione
-        creation_group = QGroupBox("Filtri data creazione")
+        self.creation_group = QGroupBox(tr("Filtri data creazione"))
         creation_layout = QVBoxLayout()
         
+        self.use_creation_date = QCheckBox(tr("Attiva filtro per data di creazione"))
+        creation_layout.addWidget(self.use_creation_date)
+        
         creation_min_layout = QHBoxLayout()
-        creation_min_layout.addWidget(QLabel("Data minima:"))
+        self.min_creation_label = QLabel(tr("Data minima:"))
+        creation_min_layout.addWidget(self.min_creation_label)
         self.min_creation_date = QDateTimeEdit()
         self.min_creation_date.setCalendarPopup(True)
         self.min_creation_date.setDateTime(QDateTime.currentDateTime().addYears(-1))
         creation_min_layout.addWidget(self.min_creation_date)
         
         creation_max_layout = QHBoxLayout()
-        creation_max_layout.addWidget(QLabel("Data massima:"))
+        self.max_creation_label = QLabel(tr("Data massima:"))
+        creation_max_layout.addWidget(self.max_creation_label)
         self.max_creation_date = QDateTimeEdit()
         self.max_creation_date.setCalendarPopup(True)
         self.max_creation_date.setDateTime(QDateTime.currentDateTime())
         creation_max_layout.addWidget(self.max_creation_date)
         
-        self.use_creation_date = QCheckBox("Attiva filtro per data di creazione")
-        
-        creation_layout.addWidget(self.use_creation_date)
         creation_layout.addLayout(creation_min_layout)
         creation_layout.addLayout(creation_max_layout)
-        creation_group.setLayout(creation_layout)
+        self.creation_group.setLayout(creation_layout)
         
         # Gruppo data di modifica
-        modification_group = QGroupBox("Filtri data modifica")
+        self.modification_group = QGroupBox(tr("Filtri data modifica"))
         modification_layout = QVBoxLayout()
         
+        self.use_modification_date = QCheckBox(tr("Attiva filtro per data di modifica"))
+        modification_layout.addWidget(self.use_modification_date)
+        
         modification_min_layout = QHBoxLayout()
-        modification_min_layout.addWidget(QLabel("Data minima:"))
+        self.min_modification_label = QLabel(tr("Data minima:"))
+        modification_min_layout.addWidget(self.min_modification_label)
         self.min_modification_date = QDateTimeEdit()
         self.min_modification_date.setCalendarPopup(True)
         self.min_modification_date.setDateTime(QDateTime.currentDateTime().addYears(-1))
         modification_min_layout.addWidget(self.min_modification_date)
         
         modification_max_layout = QHBoxLayout()
-        modification_max_layout.addWidget(QLabel("Data massima:"))
+        self.max_modification_label = QLabel(tr("Data massima:"))
+        modification_max_layout.addWidget(self.max_modification_label)
         self.max_modification_date = QDateTimeEdit()
         self.max_modification_date.setCalendarPopup(True)
         self.max_modification_date.setDateTime(QDateTime.currentDateTime())
         modification_max_layout.addWidget(self.max_modification_date)
         
-        self.use_modification_date = QCheckBox("Attiva filtro per data di modifica")
-        
-        modification_layout.addWidget(self.use_modification_date)
         modification_layout.addLayout(modification_min_layout)
         modification_layout.addLayout(modification_max_layout)
-        modification_group.setLayout(modification_layout)
+        self.modification_group.setLayout(modification_layout)
         
         # Pulsanti di azione
         action_layout = QHBoxLayout()
-        apply_btn = QPushButton("Applica filtri")
-        reset_btn = QPushButton("Reimposta filtri predefiniti")
+        self.apply_btn = QPushButton(tr("Applica filtri"))
+        self.reset_btn = QPushButton(tr("Reimposta filtri predefiniti"))
         
-        apply_btn.clicked.connect(self.apply_filters)
-        reset_btn.clicked.connect(self.reset_filters)
+        self.apply_btn.clicked.connect(self.apply_filters)
+        self.reset_btn.clicked.connect(self.reset_filters)
         
-        action_layout.addWidget(apply_btn)
-        action_layout.addWidget(reset_btn)
+        action_layout.addWidget(self.apply_btn)
+        action_layout.addWidget(self.reset_btn)
         
         # Aggiungi tutto al layout principale
-        layout.addWidget(size_group)
-        layout.addWidget(creation_group)
-        layout.addWidget(modification_group)
+        layout.addWidget(self.size_group)
+        layout.addWidget(self.creation_group)
+        layout.addWidget(self.modification_group)
         layout.addLayout(action_layout)
         layout.addStretch(1)  # Spazio flessibile in fondo
 
     def retranslate_ui(self):
         """Aggiorna tutte le traduzioni dell'interfaccia"""
-        from utils.translation_manager import tr
-        
         # Aggiorna i titoli dei gruppi
-        for i in range(self.layout().count()):
-            item = self.layout().itemAt(i)
-            if item and item.widget() and hasattr(item.widget(), 'setTitle'):
-                widget = item.widget()
-                title = widget.title().lower()
-                if 'dimensione' in title or 'size' in title:
-                    widget.setTitle(tr("Filtri dimensione file"))
-                elif 'creazione' in title or 'creation' in title:
-                    widget.setTitle(tr("Filtri data creazione"))
-                elif 'modifica' in title or 'modification' in title:
-                    widget.setTitle(tr("Filtri data modifica"))
+        self.size_group.setTitle(tr("Filtri dimensione file"))
+        self.creation_group.setTitle(tr("Filtri data creazione"))
+        self.modification_group.setTitle(tr("Filtri data modifica"))
         
         # Aggiorna le etichette
-        self._update_labels_in_widget(self)
+        self.min_size_label.setText(tr("Dimensione minima (bytes):"))
+        self.max_size_label.setText(tr("Dimensione massima (bytes):"))
+        self.min_creation_label.setText(tr("Data minima:"))
+        self.max_creation_label.setText(tr("Data massima:"))
+        self.min_modification_label.setText(tr("Data minima:"))
+        self.max_modification_label.setText(tr("Data massima:"))
         
         # Aggiorna i pulsanti
-        self._update_buttons_in_widget(self)
+        self.apply_btn.setText(tr("Applica filtri"))
+        self.reset_btn.setText(tr("Reimposta filtri predefiniti"))
         
         # Aggiorna i checkbox
-        self._update_checkboxes_in_widget(self)
+        self.use_creation_date.setText(tr("Attiva filtro per data di creazione"))
+        self.use_modification_date.setText(tr("Attiva filtro per data di modifica"))
         
         # Aggiorna lo special value text dello spinbox
-        if hasattr(self, 'max_size_spin'):
-            self.max_size_spin.setSpecialValueText(tr("Illimitato"))
-
-    def _update_labels_in_widget(self, widget):
-        """Aggiorna ricorsivamente le etichette in un widget"""
-        from utils.translation_manager import tr
-        from PyQt6.QtWidgets import QLabel
-        
-        for child in widget.findChildren(QLabel):
-            text = child.text().lower()
-            if 'dimensione minima' in text or 'minimum size' in text:
-                child.setText(tr("Dimensione minima (bytes):"))
-            elif 'dimensione massima' in text or 'maximum size' in text:
-                child.setText(tr("Dimensione massima (bytes):"))
-            elif 'data minima' in text or 'minimum date' in text:
-                child.setText(tr("Data minima:"))
-            elif 'data massima' in text or 'maximum date' in text:
-                child.setText(tr("Data massima:"))
-
-    def _update_buttons_in_widget(self, widget):
-        """Aggiorna ricorsivamente i pulsanti in un widget"""
-        from utils.translation_manager import tr
-        from PyQt6.QtWidgets import QPushButton
-        
-        for child in widget.findChildren(QPushButton):
-            text = child.text().lower()
-            if 'applica filtri' in text or 'apply filters' in text:
-                child.setText(tr("Applica filtri"))
-            elif 'reimposta' in text or 'reset' in text:
-                child.setText(tr("Reimposta filtri predefiniti"))
-
-    def _update_checkboxes_in_widget(self, widget):
-        """Aggiorna ricorsivamente i checkbox in un widget"""
-        from utils.translation_manager import tr
-        from PyQt6.QtWidgets import QCheckBox
-        
-        for child in widget.findChildren(QCheckBox):
-            text = child.text().lower()
-            if 'creazione' in text or 'creation' in text:
-                child.setText(tr("Attiva filtro per data di creazione"))
-            elif 'modifica' in text or 'modification' in text:
-                child.setText(tr("Attiva filtro per data di modifica"))
+        self.max_size_spin.setSpecialValueText(tr("Illimitato"))
 
     def update_filters_ui(self):
         """Aggiorna l'interfaccia utente con i valori attuali dei filtri"""
@@ -234,14 +197,13 @@ class FiltersTab(QWidget):
             self.filter_manager.set_modification_date_filters(None, None)
         
         # Aggiorna la vista principale se necessario
-        # Se nella scheda di esportazione c'è già un albero caricato, potremmo volerlo aggiornare
         if hasattr(self.window(), 'export_tab') and self.window().export_tab:
             self.window().export_tab.reload_tree_structure()
         
         # Mostra un messaggio di conferma
-        QMessageBox.information(self, "Filtri applicati", "I filtri sono stati applicati con successo.")
+        QMessageBox.information(self, tr("Filtri applicati"), tr("I filtri sono stati applicati con successo."))
         # Aggiorna anche la statusbar
-        self.window().statusBar.showMessage("Filtri applicati con successo", 3000)
+        self.window().statusBar.showMessage(tr("Filtri applicati con successo"), 3000)
     
     def reset_filters(self):
         """Reimposta i filtri ai valori predefiniti"""
@@ -259,9 +221,9 @@ class FiltersTab(QWidget):
             self.window().export_tab.reload_tree_structure()
         
         # Mostra un messaggio di conferma
-        QMessageBox.information(self, "Filtri reimpostati", "I filtri sono stati reimpostati ai valori predefiniti.")
+        QMessageBox.information(self, tr("Filtri reimpostati"), tr("I filtri sono stati reimpostati ai valori predefiniti."))
         # Aggiorna anche la statusbar
-        self.window().statusBar.showMessage("Filtri reimpostati", 3000)
+        self.window().statusBar.showMessage(tr("Filtri reimpostati"), 3000)
     
     def save_settings(self):
         """Salva le impostazioni dei filtri"""

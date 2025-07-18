@@ -11,11 +11,11 @@
   "Errore": "Fehler",
   "Errore nel caricamento della lingua selezionata.": "Fehler beim Laden der ausgewählten Sprache.",
   "Lingua cambiata in": "Sprache geändert zu",
-  
+
   "Esportazione": "Export",
   "Filtri": "Filter",
   "Configurazione": "Konfiguration",
-  
+
   "Selezione Directory": "Verzeichnisauswahl",
   "Directory:": "Verzeichnis:",
   "Sfoglia...": "Durchsuchen...",
@@ -40,7 +40,7 @@
   "File": "Datei",
   "Caricamento": "Laden",
   "Accesso negato": "Zugriff verweigert",
-  
+
   "Espandi tutto": "Alles erweitern",
   "Comprimi tutto": "Alles einklappen",
   "Apri in Esplora risorse": "Im Datei-Explorer öffnen",
@@ -48,7 +48,7 @@
   "Apri cartella contenitore": "Enthaltenden Ordner öffnen",
   "Copia percorso": "Pfad kopieren",
   "Percorso copiato:": "Pfad kopiert:",
-  
+
   "Seleziona Directory": "Verzeichnis auswählen",
   "Salva File": "Datei speichern",
   "Seleziona directory e file di output.": "Verzeichnis und Ausgabedatei auswählen.",
@@ -58,7 +58,7 @@
   "Errore durante l'esportazione:": "Fehler beim Export:",
   "Struttura caricata:": "Struktur geladen:",
   "Directory caricata:": "Verzeichnis geladen:",
-  
+
   "Filtri dimensione file": "Dateigrößen-Filter",
   "Dimensione minima (bytes):": "Mindestgröße (Bytes):",
   "Dimensione massima (bytes):": "Maximalgröße (Bytes):",
@@ -74,7 +74,7 @@
   "I filtri sono stati applicati con successo.": "Die Filter wurden erfolgreich angewendet.",
   "Filtri reimpostati": "Filter zurückgesetzt",
   "I filtri sono stati reimpostati ai valori predefiniti.": "Die Filter wurden auf Standardwerte zurückgesetzt.",
-  
+
   "Directory escluse": "Ausgeschlossene Verzeichnisse",
   "File esclusi": "Ausgeschlossene Dateien",
   "Estensioni incluse": "Eingeschlossene Erweiterungen",
@@ -105,5 +105,24 @@
   "Inserisci un'espressione regolare per escludere i file:": "Geben Sie einen regulären Ausdruck ein, um Dateien auszuschließen:",
   "Aggiungi estensione": "Erweiterung hinzufügen",
   "Estensione (con punto iniziale, es. .py):": "Erweiterung (mit Punkt, z.B. .py):",
-  "Inserisci un'espressione regolare per includere i file:": "Geben Sie einen regulären Ausdruck ein, um Dateien einzuschließen:"
+  "Inserisci un'espressione regolare per includere i file:": "Geben Sie einen regulären Ausdruck ein, um Dateien einzuschließen:",
+
+  "Filtri applicati con successo": "Filter erfolgreich angewendet",
+  "Imposta file preset": "Preset-Datei festlegen",
+  "Cambiare percorso preset": "Preset-Pfad ändern",
+  "Vuoi spostare i preset in": "Möchten Sie die Presets verschieben nach",
+  "I preset attuali verranno copiati nel nuovo percorso.": "Die aktuellen Presets werden in den neuen Pfad kopiert.",
+  "Percorso preset impostato:": "Preset-Pfad festgelegt:",
+  "Nome del preset:": "Preset-Name:",
+  "Il preset": "Das Preset",
+  "esiste già. Sovrascrivere?": "existiert bereits. Überschreiben?",
+  "Sei sicuro di voler aggiornare il preset": "Sind Sie sicher, dass Sie das Preset aktualisieren möchten",
+  "Sei sicuro di voler eliminare il preset": "Sind Sie sicher, dass Sie das Preset löschen möchten",
+  "Esempi di pattern comuni:": "Beispiele für häufige Muster:",
+  "Corrisponde a nomi che iniziano con": "Entspricht Namen, die beginnen mit",
+  "Corrisponde a nomi che finiscono con": "Entspricht Namen, die enden mit",
+  "Corrisponde a nomi come": "Entspricht Namen wie",
+  "ecc.": "usw.",
+  "Corrisponde a qualsiasi nome che contiene": "Entspricht jedem Namen, der enthält",
+  "Corrisponde a file che finiscono con": "Entspricht Dateien, die enden mit"
 }
