@@ -23,7 +23,7 @@ def setup_application_icon(app):
 def setup_translations(app):
     """Configura il sistema di traduzioni"""
     # Inizializza il sistema di traduzione
-    translation_manager.app = app
+    translation_manager.initialize(app)
     
     # Carica la lingua salvata o quella di sistema
     saved_language = QSettings().value("language", None)
