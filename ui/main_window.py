@@ -142,7 +142,8 @@ class MainWindow(QMainWindow):
             
         language_code = self.language_combo.currentData()
         if language_code and language_code != translation_manager.get_current_language():
-            success = translation_manager.change_language(language_code)
+            # CORRETTO: usa load_language invece di change_language
+            success = translation_manager.load_language(language_code)
             
             if success:
                 # Aggiorna l'interfaccia

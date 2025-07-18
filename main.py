@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QSettings, QTranslator, QLocale
+from PyQt6.QtCore import QSettings, QLocale
 
 from core.exporter import DirectoryExporter
 from core.filters import FilterManager
@@ -20,29 +20,10 @@ def setup_application_icon(app):
         print("Nessuna icona trovata")
         return False
 
-def setup_translations(app):
+def setup_translations(settings):
     """Configura il sistema di traduzioni"""
-    # Inizializza il sistema di traduzione
-    translation_manager.initialize(app)
-    
-    # Carica la lingua salvata o quella di sistema
-    saved_language = QSettings().value("language", None)
-    
-    if saved_language:
-        # Usa la lingua salvata
-        translation_manager.load_translation(saved_language)
-    else:
-        # Rileva la lingua di sistema
-        system_locale = QLocale.system().name()[:2]  # Prende solo il codice della lingua (es. 'en' da 'en_US')
-        
-        if system_locale in translation_manager.get_available_languages():
-            translation_manager.load_translation(system_locale)
-            # Salva la lingua rilevata
-            QSettings().setValue("language", system_locale)
-        else:
-            # Default a italiano
-            translation_manager.load_translation('it')
-            QSettings().setValue("language", 'it')
+    # Inizializza il sistema di traduzione con QSettings, non QApplication
+    translation_manager.initialize(settings)
     
     print(f"Lingua caricata: {translation_manager.get_current_language_name()}")
 
@@ -52,20 +33,21 @@ def main():
     os.makedirs("ui", exist_ok=True)
     os.makedirs("utils", exist_ok=True)
     os.makedirs("assets", exist_ok=True)
-    os.makedirs("translations", exist_ok=True)  # Cartella per le traduzioni
+    os.makedirs("translations", exist_ok=True)
     
     app = QApplication(sys.argv)
     app.setApplicationName("Directory Structure Exporter")
     app.setOrganizationName("DirectoryExporter")
     app.setApplicationVersion("2.0")
 
+    # Crea QSettings PRIMA di setup_translations
+    settings = QSettings()
+    
     # Configura l'icona dell'applicazione
     setup_application_icon(app)
     
-    # Configura il sistema di traduzioni
-    setup_translations(app)
-
-    settings = QSettings()
+    # Configura il sistema di traduzioni (ora con settings, non app)
+    setup_translations(settings)
     
     filter_manager = FilterManager()
     config_manager = ConfigManager(filter_manager, settings)

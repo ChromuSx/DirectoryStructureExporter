@@ -1,69 +1,112 @@
 import os
 import json
-from PyQt6.QtCore import QTranslator, QLocale, QCoreApplication, QSettings
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QObject, pyqtSignal, QSettings
+from typing import Dict, Optional, Set
 
-class TranslationManager:
-    """Gestisce le traduzioni dell'applicazione"""
+class TranslationManager(QObject):
+    """Gestisce le traduzioni dell'applicazione in modo semplificato"""
+    
+    # Segnale emesso quando la lingua cambia
+    language_changed = pyqtSignal(str)
     
     def __init__(self):
-        self.app = None
-        self.translator = None
+        super().__init__()
         self.current_language = 'it'  # Default italiano
         self.translations_dir = 'translations'
-        self.settings = None
-        self.current_translations = {}
+        self.current_translations: Dict[str, str] = {}
+        self.settings: Optional[QSettings] = None
         
-        # Dizionario delle lingue disponibili
+        # Lingue disponibili
         self.available_languages = {
             'it': 'Italiano',
-            'en': 'English',
-            'es': 'Español', 
+            'en': 'English', 
+            'es': 'Español',
             'fr': 'Français',
             'de': 'Deutsch'
         }
         
-        # Crea la directory delle traduzioni se non esiste
+        # Cache per evitare ricaricamenti
+        self._translation_cache: Dict[str, Dict[str, str]] = {}
+        
+        # Set di stringhe mancanti per debugging
+        self._missing_translations: Set[str] = set()
+        
         os.makedirs(self.translations_dir, exist_ok=True)
     
-    def initialize(self, app):
-        """Inizializza il manager con l'applicazione Qt"""
-        self.app = app
-        self.translator = QTranslator()
-        self.settings = QSettings()
+    def initialize(self, settings: QSettings) -> None:
+        """Inizializza il manager con le impostazioni"""
+        self.settings = settings
+        self._create_translation_files_if_needed()
         
-        # Crea i file JSON vuoti se non esistono
-        self._create_empty_translation_files()
+        # Carica lingua salvata o sistema
+        saved_language = settings.value("language", None)
+        if saved_language and saved_language in self.available_languages:
+            self.load_language(saved_language)
+        else:
+            # Rileva lingua sistema o default
+            from PyQt6.QtCore import QLocale
+            system_lang = QLocale.system().name()[:2]
+            target_lang = system_lang if system_lang in self.available_languages else 'it'
+            self.load_language(target_lang)
     
-    def get_available_languages(self):
-        """Restituisce il dizionario delle lingue disponibili"""
-        return self.available_languages
+    def get_available_languages(self) -> Dict[str, str]:
+        return self.available_languages.copy()
     
-    def get_current_language(self):
-        """Restituisce il codice della lingua corrente"""
+    def get_current_language(self) -> str:
         return self.current_language
     
-    def get_current_language_name(self):
-        """Restituisce il nome della lingua corrente"""
+    def get_current_language_name(self) -> str:
         return self.available_languages.get(self.current_language, 'Italiano')
     
-    def save_language(self, language_code):
-        """Salva la lingua corrente nelle impostazioni"""
+    def load_language(self, language_code: str) -> bool:
+        """Carica una lingua specifica"""
+        if language_code not in self.available_languages:
+            return False
+        
+        old_language = self.current_language
+        self.current_language = language_code
+        
+        if language_code == 'it':
+            # Italiano è default, nessuna traduzione necessaria
+            self.current_translations = {}
+            self._missing_translations.clear()
+        else:
+            # Carica da cache o file
+            if language_code in self._translation_cache:
+                self.current_translations = self._translation_cache[language_code]
+            else:
+                success = self._load_from_file(language_code)
+                if not success:
+                    self.current_language = old_language
+                    return False
+        
+        # Salva impostazione e emetti segnale
         if self.settings:
             self.settings.setValue("language", language_code)
-    
-    def load_translation(self, language_code):
-        """Carica una traduzione specifica dal file JSON"""
-        if language_code == 'it':
-            # Italiano è la lingua di default, pulisci le traduzioni
-            self.current_translations = {}
-            self.current_language = language_code
-            return True
         
-        # Carica traduzioni dal file JSON
-        return self._load_translation_from_json(language_code)
+        if old_language != language_code:
+            self.language_changed.emit(language_code)
+        
+        return True
     
-    def _load_translation_from_json(self, language_code):
+    def translate(self, text: str, context: Optional[str] = None) -> str:
+        """Traduce un testo"""
+        if self.current_language == 'it' or not text:
+            return text
+        
+        # Cerca traduzione
+        translation = self.current_translations.get(text)
+        if translation:
+            return translation
+        
+        # Traduzione mancante - log per debugging
+        if text not in self._missing_translations:
+            self._missing_translations.add(text)
+            print(f"Traduzione mancante [{self.current_language}]: '{text}'")
+        
+        return text  # Fallback a italiano
+    
+    def _load_from_file(self, language_code: str) -> bool:
         """Carica traduzioni da file JSON"""
         json_file = os.path.join(self.translations_dir, f"{language_code}.json")
         
@@ -71,124 +114,80 @@ class TranslationManager:
             with open(json_file, 'r', encoding='utf-8') as f:
                 translations = json.load(f)
             
-            # Carica le traduzioni in memoria
-            self.current_translations = translations
-            self.current_language = language_code
+            if not isinstance(translations, dict):
+                raise ValueError("Il file deve contenere un oggetto JSON")
             
-            print(f"Traduzioni caricate per {language_code}: {len(translations)} stringhe")
+            # Cache e imposta traduzioni correnti
+            self._translation_cache[language_code] = translations
+            self.current_translations = translations
+            
+            print(f"Caricate {len(translations)} traduzioni per {language_code}")
             return True
+            
         except Exception as e:
-            print(f"Errore nel caricamento delle traduzioni per {language_code}: {e}")
-            # In caso di errore, mantieni almeno la lingua impostata
-            self.current_language = language_code
+            print(f"Errore caricamento traduzioni {language_code}: {e}")
             self.current_translations = {}
             return False
     
-    def _create_empty_translation_files(self):
-        """Crea file JSON vuoti per le lingue se non esistono"""
+    def _create_translation_files_if_needed(self) -> None:
+        """Crea file JSON vuoti se non esistono"""
         for lang_code in self.available_languages.keys():
-            if lang_code != 'it':  # Skip italiano (default)
-                json_file = os.path.join(self.translations_dir, f"{lang_code}.json")
+            if lang_code == 'it':
+                continue
                 
-                # Se il file non esiste, crealo vuoto
-                if not os.path.exists(json_file):
-                    try:
-                        with open(json_file, 'w', encoding='utf-8') as f:
-                            json.dump({}, f, indent=2, ensure_ascii=False)
-                        print(f"File di traduzione vuoto creato: {json_file}")
-                    except Exception as e:
-                        print(f"Errore creazione file {json_file}: {e}")
+            json_file = os.path.join(self.translations_dir, f"{lang_code}.json")
+            if not os.path.exists(json_file):
+                try:
+                    with open(json_file, 'w', encoding='utf-8') as f:
+                        json.dump({}, f, indent=2, ensure_ascii=False)
+                    print(f"Creato file traduzione: {json_file}")
+                except Exception as e:
+                    print(f"Errore creazione {json_file}: {e}")
     
-    def tr(self, text, context=None):
-        """Traduce un testo utilizzando le traduzioni caricate dal JSON"""
-        # Se la lingua è italiana, restituisci il testo originale
-        if self.current_language == 'it':
-            return text
-            
-        # Se abbiamo traduzioni caricate dal JSON, usale
-        if self.current_translations:
-            translated = self.current_translations.get(text, None)
-            if translated:
-                return translated
+    def get_missing_translations(self) -> Set[str]:
+        """Restituisce le traduzioni mancanti per debug"""
+        return self._missing_translations.copy()
+    
+    def add_translation(self, italian_text: str, translated_text: str, 
+                       language_code: Optional[str] = None) -> bool:
+        """Aggiunge una traduzione (utile per tool di traduzione)"""
+        target_lang = language_code or self.current_language
         
-        # Fallback: restituisci il testo originale se non trovato
-        return text
-    
-    def change_language(self, language_code):
-        """Cambia la lingua dell'applicazione"""
-        if language_code in self.available_languages:
-            success = self.load_translation(language_code)
-            if success:
-                self.save_language(language_code)
-                print(f"Lingua cambiata con successo a: {self.get_current_language_name()}")
-                return True
-            else:
-                print(f"Errore nel cambio lingua a: {language_code}")
-        return False
-    
-    def add_translation(self, language_code, italian_text, translated_text):
-        """Aggiunge una traduzione al file JSON"""
-        if language_code == 'it':
-            return  # Non serve tradurre l'italiano
+        if target_lang == 'it':
+            return True  # Non serve tradurre l'italiano
             
-        json_file = os.path.join(self.translations_dir, f"{language_code}.json")
+        json_file = os.path.join(self.translations_dir, f"{target_lang}.json")
         
-        # Carica traduzioni esistenti
-        translations = {}
-        if os.path.exists(json_file):
-            try:
+        try:
+            # Carica esistenti
+            translations = {}
+            if os.path.exists(json_file):
                 with open(json_file, 'r', encoding='utf-8') as f:
                     translations = json.load(f)
-            except:
-                pass
-        
-        # Aggiungi nuova traduzione
-        translations[italian_text] = translated_text
-        
-        # Salva file aggiornato
-        try:
+            
+            # Aggiungi nuova
+            translations[italian_text] = translated_text
+            
+            # Salva
             with open(json_file, 'w', encoding='utf-8') as f:
                 json.dump(translations, f, indent=2, ensure_ascii=False)
             
-            # Se questa è la lingua corrente, aggiorna anche le traduzioni in memoria
-            if language_code == self.current_language:
-                self.current_translations[italian_text] = translated_text
-                
-            return True
-        except Exception as e:
-            print(f"Errore aggiungendo traduzione: {e}")
-            return False
-    
-    def get_missing_translations(self, language_code, italian_texts):
-        """Restituisce le traduzioni mancanti per una lingua"""
-        if language_code == 'it':
-            return []
+            # Aggiorna cache e traduzioni correnti se necessario
+            self._translation_cache[target_lang] = translations
+            if target_lang == self.current_language:
+                self.current_translations = translations
+                if italian_text in self._missing_translations:
+                    self._missing_translations.remove(italian_text)
             
-        json_file = os.path.join(self.translations_dir, f"{language_code}.json")
-        
-        existing_translations = {}
-        if os.path.exists(json_file):
-            try:
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    existing_translations = json.load(f)
-            except:
-                pass
-        
-        missing = []
-        for text in italian_texts:
-            if text not in existing_translations:
-                missing.append(text)
-        
-        return missing
-    
-    def reload_translations(self):
-        """Ricarica le traduzioni dal file JSON corrente"""
-        if self.current_language != 'it':
-            self._load_translation_from_json(self.current_language)
+            return True
+            
+        except Exception as e:
+            print(f"Errore aggiunta traduzione: {e}")
+            return False
 
 # Istanza globale
 translation_manager = TranslationManager()
 
-def tr(text, context=None):
-    """Funzione di traduzione globale"""
-    return translation_manager.tr(text, context)
+def tr(text: str, context: Optional[str] = None) -> str:
+    """Funzione di traduzione globale semplificata"""
+    return translation_manager.translate(text, context)
