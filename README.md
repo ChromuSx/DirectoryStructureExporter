@@ -1,6 +1,8 @@
 # Directory Structure Exporter
 
-![Logo](assets/logo.png)
+<div align="center">
+  <img src="assets/logo.png" alt="Directory Structure Exporter Logo" width="200">
+</div>
 
 A comprehensive desktop application for visualizing, filtering, and exporting directory structures in various formats. Built with Python and PyQt6, offering an intuitive graphical interface and powerful filtering options.
 
