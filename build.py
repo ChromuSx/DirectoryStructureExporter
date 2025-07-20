@@ -71,7 +71,7 @@ def build_executable():
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         
         # Verifica che l'eseguibile sia stato creato
-        exe_path = 'dist/DirectoryExporter.exe'
+        exe_path = 'dist/DirectoryStructureExporter.exe'
         if os.path.exists(exe_path):
             file_size = os.path.getsize(exe_path) / (1024 * 1024)  # MB
             print(f"✅ Eseguibile creato con successo!")
@@ -93,7 +93,7 @@ def build_executable():
 
 def test_executable():
     """Testa l'eseguibile creato (opzionale)"""
-    exe_path = 'dist/DirectoryExporter.exe'
+    exe_path = 'dist/DirectoryStructureExporter.exe'
     
     if os.path.exists(exe_path):
         print("🧪 Vuoi testare l'eseguibile? (y/n): ", end='')
@@ -122,7 +122,7 @@ def main():
     # Costruisci
     if build_executable():
         print("\n🎉 Build completato con successo!")
-        print("📦 L'eseguibile è pronto in dist/DirectoryExporter.exe")
+        print("📦 L'eseguibile è pronto in dist/DirectoryStructureExporter.exe")
         print("💡 Puoi distribuire questo file singolo agli utenti")
         
         # Test opzionale
