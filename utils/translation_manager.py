@@ -1,193 +1,599 @@
 import os
-import json
 from PyQt6.QtCore import QObject, pyqtSignal, QSettings
 from typing import Dict, Optional, Set
 
 class TranslationManager(QObject):
-    """Gestisce le traduzioni dell'applicazione in modo semplificato"""
-    
-    # Segnale emesso quando la lingua cambia
+    """Gestisce le traduzioni dell'applicazione senza file JSON"""
+
     language_changed = pyqtSignal(str)
-    
+
     def __init__(self):
         super().__init__()
         self.current_language = 'it'  # Default italiano
-        self.translations_dir = 'translations'
-        self.current_translations: Dict[str, str] = {}
         self.settings: Optional[QSettings] = None
-        
-        # Lingue disponibili
+
         self.available_languages = {
             'it': 'Italiano',
-            'en': 'English', 
+            'en': 'English',
             'es': 'Español',
             'fr': 'Français',
             'de': 'Deutsch'
         }
-        
-        # Cache per evitare ricaricamenti
-        self._translation_cache: Dict[str, Dict[str, str]] = {}
-        
-        # Set di stringhe mancanti per debugging
+
+        # Dizionari statici delle traduzioni
+        self._translations = {
+            'en': {
+                "Directory Structure Exporter": "Directory Structure Exporter",
+                "Tema:": "Theme:",
+                "Lingua:": "Language:",
+                "Sistema": "System",
+                "Chiaro": "Light",
+                "Scuro": "Dark",
+                "Pronto": "Ready",
+                "Lingua cambiata": "Language changed",
+                "La lingua è stata cambiata. Alcune modifiche potrebbero richiedere il riavvio dell'applicazione.": "Language has been changed. Some changes may require restarting the application.",
+                "Errore": "Error",
+                "Errore nel caricamento della lingua selezionata.": "Error loading selected language.",
+                "Lingua cambiata in": "Language changed to",
+                "Esportazione": "Export",
+                "Filtri": "Filters",
+                "Configurazione": "Configuration",
+                "Selezione Directory": "Directory Selection",
+                "Directory:": "Directory:",
+                "Sfoglia...": "Browse...",
+                "Trascina qui una cartella": "Drag a folder here",
+                "File di Output": "Output File",
+                "File:": "File:",
+                "Formato:": "Format:",
+                "Opzioni di esportazione": "Export Options",
+                "Includi file": "Include files",
+                "Profondità massima:": "Maximum depth:",
+                "Illimitata": "Unlimited",
+                "Esporta": "Export",
+                "Struttura Directory": "Directory Structure",
+                "Mostra file": "Show files",
+                "Applica filtri": "Apply filters",
+                "Cerca:": "Search:",
+                "Cerca file o cartelle...": "Search files or folders...",
+                "Nome": "Name",
+                "Tipo": "Type",
+                "Percorso": "Path",
+                "Directory": "Directory",
+                "File": "File",
+                "Caricamento": "Loading",
+                "Accesso negato": "Access denied",
+                "Espandi tutto": "Expand all",
+                "Comprimi tutto": "Collapse all",
+                "Apri in Esplora risorse": "Open in File Explorer",
+                "Apri file": "Open file",
+                "Apri cartella contenitore": "Open containing folder",
+                "Copia percorso": "Copy path",
+                "Percorso copiato:": "Path copied:",
+                "Seleziona Directory": "Select Directory",
+                "Salva File": "Save File",
+                "Seleziona directory e file di output.": "Select directory and output file.",
+                "Seleziona prima una directory.": "Select a directory first.",
+                "Esportazione completata": "Export completed",
+                "Errore durante l'esportazione": "Error during export",
+                "Errore durante l'esportazione:": "Error during export:",
+                "Struttura caricata:": "Structure loaded:",
+                "Directory caricata:": "Directory loaded:",
+                "Filtri dimensione file": "File Size Filters",
+                "Dimensione minima (bytes):": "Minimum size (bytes):",
+                "Dimensione massima (bytes):": "Maximum size (bytes):",
+                "Illimitato": "Unlimited",
+                "Filtri data creazione": "Creation Date Filters",
+                "Data minima:": "Minimum date:",
+                "Data massima:": "Maximum date:",
+                "Attiva filtro per data di creazione": "Enable creation date filter",
+                "Filtri data modifica": "Modification Date Filters",
+                "Attiva filtro per data di modifica": "Enable modification date filter",
+                "Reimposta filtri predefiniti": "Reset default filters",
+                "Filtri applicati": "Filters applied",
+                "I filtri sono stati applicati con successo.": "Filters have been applied successfully.",
+                "Filtri reimpostati": "Filters reset",
+                "I filtri sono stati reimpostati ai valori predefiniti.": "Filters have been reset to default values.",
+                "Directory escluse": "Excluded Directories",
+                "File esclusi": "Excluded Files",
+                "Estensioni incluse": "Included Extensions",
+                "Preset Configurazioni": "Configuration Presets",
+                "Preset:": "Preset:",
+                "-- Seleziona un preset --": "-- Select a preset --",
+                "Salva come nuovo": "Save as new",
+                "Aggiorna selezionato": "Update selected",
+                "Elimina selezionato": "Delete selected",
+                "Percorso File Preset": "Preset File Path",
+                "File preset:": "Preset file:",
+                "Applica": "Apply",
+                "Aggiungi": "Add",
+                "Aggiungi Regex": "Add Regex",
+                "Rimuovi": "Remove",
+                "Salva configurazione": "Save configuration",
+                "Carica configurazione": "Load configuration",
+                "Guida alle Espressioni Regolari": "Regular Expressions Guide",
+                "Aiuto Espressioni Regolari": "Regular Expressions Help",
+                "Aggiungi directory": "Add directory",
+                "Nome directory:": "Directory name:",
+                "Aggiungi pattern regex": "Add regex pattern",
+                "Inserisci un'espressione regolare per escludere le directory:": "Enter a regular expression to exclude directories:",
+                "Espressione non valida": "Invalid expression",
+                "L'espressione regolare inserita non è valida.": "The entered regular expression is not valid.",
+                "Aggiungi file": "Add file",
+                "Nome file (es. .gitignore, thumbs.db):": "File name (e.g. .gitignore, thumbs.db):",
+                "Inserisci un'espressione regolare per escludere i file:": "Enter a regular expression to exclude files:",
+                "Aggiungi estensione": "Add extension",
+                "Estensione (con punto iniziale, es. .py):": "Extension (with initial dot, e.g. .py):",
+                "Inserisci un'espressione regolare per includere i file:": "Enter a regular expression to include files:",
+                "Salva Configurazione": "Save Configuration",
+                "Carica Configurazione": "Load Configuration",
+                "Salva Preset": "Save Preset",
+                "Preset esistente": "Existing preset",
+                "Nessun preset selezionato": "No preset selected",
+                "Seleziona prima un preset da aggiornare.": "Select a preset to update first.",
+                "Aggiorna preset": "Update preset",
+                "Seleziona prima un preset da eliminare.": "Select a preset to delete first.",
+                "Elimina preset": "Delete preset",
+                "Filtri applicati con successo": "Filters applied successfully",
+                "Imposta file preset": "Set preset file",
+                "Cambiare percorso preset": "Change preset path",
+                "Vuoi spostare i preset in": "Do you want to move presets to",
+                "I preset attuali verranno copiati nel nuovo percorso.": "Current presets will be copied to the new path.",
+                "Percorso preset impostato:": "Preset path set:",
+                "Nome del preset:": "Preset name:",
+                "Il preset": "The preset",
+                "esiste già. Sovrascrivere?": "already exists. Overwrite?",
+                "Sei sicuro di voler aggiornare il preset": "Are you sure you want to update the preset",
+                "Sei sicuro di voler eliminare il preset": "Are you sure you want to delete the preset",
+                "Esempi di pattern comuni:": "Examples of common patterns:",
+                "Corrisponde a nomi che iniziano con": "Matches names starting with",
+                "Corrisponde a nomi che finiscono con": "Matches names ending with",
+                "Corrisponde a nomi come": "Matches names like",
+                "ecc.": "etc.",
+                "Corrisponde a qualsiasi nome che contiene": "Matches any name containing",
+                "Corrisponde a file che finiscono con": "Matches files ending with"
+            },
+            'de': {
+                "Directory Structure Exporter": "Verzeichnisstruktur-Exporteur",
+                "Tema:": "Thema:",
+                "Lingua:": "Sprache:",
+                "Sistema": "System",
+                "Chiaro": "Hell",
+                "Scuro": "Dunkel",
+                "Pronto": "Bereit",
+                "Lingua cambiata": "Sprache geändert",
+                "La lingua è stata cambiata. Alcune modifiche potrebbero richiedere il riavvio dell'applicazione.": "Die Sprache wurde geändert. Einige Änderungen können einen Neustart der Anwendung erfordern.",
+                "Errore": "Fehler",
+                "Errore nel caricamento della lingua selezionata.": "Fehler beim Laden der ausgewählten Sprache.",
+                "Lingua cambiata in": "Sprache geändert zu",
+                "Esportazione": "Export",
+                "Filtri": "Filter",
+                "Configurazione": "Konfiguration",
+                "Selezione Directory": "Verzeichnisauswahl",
+                "Directory:": "Verzeichnis:",
+                "Sfoglia...": "Durchsuchen...",
+                "Trascina qui una cartella": "Ordner hierher ziehen",
+                "File di Output": "Ausgabedatei",
+                "File:": "Datei:",
+                "Formato:": "Format:",
+                "Opzioni di esportazione": "Export-Optionen",
+                "Includi file": "Dateien einschließen",
+                "Profondità massima:": "Maximale Tiefe:",
+                "Illimitata": "Unbegrenzt",
+                "Esporta": "Exportieren",
+                "Struttura Directory": "Verzeichnisstruktur",
+                "Mostra file": "Dateien anzeigen",
+                "Applica filtri": "Filter anwenden",
+                "Cerca:": "Suchen:",
+                "Cerca file o cartelle...": "Dateien oder Ordner suchen...",
+                "Nome": "Name",
+                "Tipo": "Typ",
+                "Percorso": "Pfad",
+                "Directory": "Verzeichnis",
+                "File": "Datei",
+                "Caricamento": "Laden",
+                "Accesso negato": "Zugriff verweigert",
+                "Espandi tutto": "Alles erweitern",
+                "Comprimi tutto": "Alles einklappen",
+                "Apri in Esplora risorse": "Im Datei-Explorer öffnen",
+                "Apri file": "Datei öffnen",
+                "Apri cartella contenitore": "Enthaltenden Ordner öffnen",
+                "Copia percorso": "Pfad kopieren",
+                "Percorso copiato:": "Pfad kopiert:",
+                "Seleziona Directory": "Verzeichnis auswählen",
+                "Salva File": "Datei speichern",
+                "Seleziona directory e file di output.": "Verzeichnis und Ausgabedatei auswählen.",
+                "Seleziona prima una directory.": "Zuerst ein Verzeichnis auswählen.",
+                "Esportazione completata": "Export abgeschlossen",
+                "Errore durante l'esportazione": "Fehler beim Export",
+                "Errore durante l'esportazione:": "Fehler beim Export:",
+                "Struttura caricata:": "Struktur geladen:",
+                "Directory caricata:": "Verzeichnis geladen:",
+                "Filtri dimensione file": "Dateigrößen-Filter",
+                "Dimensione minima (bytes):": "Mindestgröße (Bytes):",
+                "Dimensione massima (bytes):": "Maximalgröße (Bytes):",
+                "Illimitato": "Unbegrenzt",
+                "Filtri data creazione": "Erstellungsdatum-Filter",
+                "Data minima:": "Mindestdatum:",
+                "Data massima:": "Maximaldatum:",
+                "Attiva filtro per data di creazione": "Filter für Erstellungsdatum aktivieren",
+                "Filtri data modifica": "Änderungsdatum-Filter",
+                "Attiva filtro per data di modifica": "Filter für Änderungsdatum aktivieren",
+                "Reimposta filtri predefiniti": "Standardfilter zurücksetzen",
+                "Filtri applicati": "Filter angewendet",
+                "I filtri sono stati applicati con successo.": "Die Filter wurden erfolgreich angewendet.",
+                "Filtri reimpostati": "Filter zurückgesetzt",
+                "I filtri sono stati reimpostati ai valori predefiniti.": "Die Filter wurden auf Standardwerte zurückgesetzt.",
+                "Directory escluse": "Ausgeschlossene Verzeichnisse",
+                "File esclusi": "Ausgeschlossene Dateien",
+                "Estensioni incluse": "Eingeschlossene Erweiterungen",
+                "Preset Configurazioni": "Vordefinierte Konfigurationen",
+                "Preset:": "Preset:",
+                "-- Seleziona un preset --": "-- Preset auswählen --",
+                "Salva come nuovo": "Als neu speichern",
+                "Aggiorna selezionato": "Ausgewähltes aktualisieren",
+                "Elimina selezionato": "Ausgewähltes löschen",
+                "Percorso File Preset": "Preset-Dateipfad",
+                "File preset:": "Preset-Datei:",
+                "Applica": "Anwenden",
+                "Aggiungi": "Hinzufügen",
+                "Aggiungi Regex": "Regex hinzufügen",
+                "Rimuovi": "Entfernen",
+                "Salva configurazione": "Konfiguration speichern",
+                "Carica configurazione": "Konfiguration laden",
+                "Guida alle Espressioni Regolari": "Reguläre Ausdrücke Anleitung",
+                "Aiuto Espressioni Regolari": "Hilfe für Reguläre Ausdrücke",
+                "Aggiungi directory": "Verzeichnis hinzufügen",
+                "Nome directory:": "Verzeichnisname:",
+                "Aggiungi pattern regex": "Regex-Muster hinzufügen",
+                "Inserisci un'espressione regolare per escludere le directory:": "Geben Sie einen regulären Ausdruck ein, um Verzeichnisse auszuschließen:",
+                "Espressione non valida": "Ungültiger Ausdruck",
+                "L'espressione regolare inserita non è valida.": "Der eingegebene reguläre Ausdruck ist nicht gültig.",
+                "Aggiungi file": "Datei hinzufügen",
+                "Nome file (es. .gitignore, thumbs.db):": "Dateiname (z.B. .gitignore, thumbs.db):",
+                "Inserisci un'espressione regolare per escludere i file:": "Geben Sie einen regulären Ausdruck ein, um Dateien auszuschließen:",
+                "Aggiungi estensione": "Erweiterung hinzufügen",
+                "Estensione (con punto iniziale, es. .py):": "Erweiterung (mit Punkt, z.B. .py):",
+                "Inserisci un'espressione regolare per includere i file:": "Geben Sie einen regulären Ausdruck ein, um Dateien einzuschließen:",
+                "Filtri applicati con successo": "Filter erfolgreich angewendet",
+                "Imposta file preset": "Preset-Datei festlegen",
+                "Cambiare percorso preset": "Preset-Pfad ändern",
+                "Vuoi spostare i preset in": "Möchten Sie die Presets verschieben nach",
+                "I preset attuali verranno copiati nel nuovo percorso.": "Die aktuellen Presets werden in den neuen Pfad kopiert.",
+                "Percorso preset impostato:": "Preset-Pfad festgelegt:",
+                "Nome del preset:": "Preset-Name:",
+                "Il preset": "Das Preset",
+                "esiste già. Sovrascrivere?": "existiert bereits. Überschreiben?",
+                "Sei sicuro di voler aggiornare il preset": "Sind Sie sicher, dass Sie das Preset aktualisieren möchten",
+                "Sei sicuro di voler eliminare il preset": "Sind Sie sicher, dass Sie das Preset löschen möchten",
+                "Esempi di pattern comuni:": "Beispiele für häufige Muster:",
+                "Corrisponde a nomi che iniziano con": "Entspricht Namen, die beginnen mit",
+                "Corrisponde a nomi che finiscono con": "Entspricht Namen, die enden mit",
+                "Corrisponde a nomi come": "Entspricht Namen wie",
+                "ecc.": "usw.",
+                "Corrisponde a qualsiasi nome che contiene": "Entspricht jedem Namen, der enthält",
+                "Corrisponde a file che finiscono con": "Entspricht Dateien, die enden mit"
+            },
+            'fr': {
+                "Directory Structure Exporter": "Exportateur de Structure de Répertoires",
+                "Tema:": "Thème:",
+                "Lingua:": "Langue:",
+                "Sistema": "Système",
+                "Chiaro": "Clair",
+                "Scuro": "Sombre",
+                "Pronto": "Prêt",
+                "Lingua cambiata": "Langue changée",
+                "La lingua è stata cambiata. Alcune modifiche potrebbero richiedere il riavvio dell'applicazione.": "La langue a été changée. Certains changements peuvent nécessiter le redémarrage de l'application.",
+                "Errore": "Erreur",
+                "Errore nel caricamento della lingua selezionata.": "Erreur lors du chargement de la langue sélectionnée.",
+                "Lingua cambiata in": "Langue changée en",
+                "Esportazione": "Exportation",
+                "Filtri": "Filtres",
+                "Configurazione": "Configuration",
+                "Selezione Directory": "Sélection de Répertoire",
+                "Directory:": "Répertoire:",
+                "Sfoglia...": "Parcourir...",
+                "Trascina qui una cartella": "Glissez un dossier ici",
+                "File di Output": "Fichier de Sortie",
+                "File:": "Fichier:",
+                "Formato:": "Format:",
+                "Opzioni di esportazione": "Options d'exportation",
+                "Includi file": "Inclure fichiers",
+                "Profondità massima:": "Profondeur maximale:",
+                "Illimitata": "Illimitée",
+                "Esporta": "Exporter",
+                "Struttura Directory": "Structure de Répertoires",
+                "Mostra file": "Afficher fichiers",
+                "Applica filtri": "Appliquer filtres",
+                "Cerca:": "Rechercher:",
+                "Cerca file o cartelle...": "Rechercher fichiers ou dossiers...",
+                "Nome": "Nom",
+                "Tipo": "Type",
+                "Percorso": "Chemin",
+                "Directory": "Répertoire",
+                "File": "Fichier",
+                "Caricamento": "Chargement",
+                "Accesso negato": "Accès refusé",
+                "Espandi tutto": "Développer tout",
+                "Comprimi tutto": "Réduire tout",
+                "Apri in Esplora risorse": "Ouvrir dans l'Explorateur",
+                "Apri file": "Ouvrir fichier",
+                "Apri cartella contenitore": "Ouvrir dossier parent",
+                "Copia percorso": "Copier chemin",
+                "Percorso copiato:": "Chemin copié:",
+                "Seleziona Directory": "Sélectionner Répertoire",
+                "Salva File": "Enregistrer Fichier",
+                "Seleziona directory e file di output.": "Sélectionnez répertoire et fichier de sortie.",
+                "Seleziona prima una directory.": "Sélectionnez d'abord un répertoire.",
+                "Esportazione completata": "Exportation terminée",
+                "Errore durante l'esportazione": "Erreur pendant l'exportation",
+                "Errore durante l'esportazione:": "Erreur pendant l'exportation:",
+                "Struttura caricata:": "Structure chargée:",
+                "Directory caricata:": "Répertoire chargé:",
+                "Filtri dimensione file": "Filtres de Taille de Fichier",
+                "Dimensione minima (bytes):": "Taille minimale (octets):",
+                "Dimensione massima (bytes):": "Taille maximale (octets):",
+                "Illimitato": "Illimité",
+                "Filtri data creazione": "Filtres de Date de Création",
+                "Data minima:": "Date minimale:",
+                "Data massima:": "Date maximale:",
+                "Attiva filtro per data di creazione": "Activer filtre par date de création",
+                "Filtri data modifica": "Filtres de Date de Modification",
+                "Attiva filtro per data di modifica": "Activer filtre par date de modification",
+                "Reimposta filtri predefiniti": "Réinitialiser filtres par défaut",
+                "Filtri applicati": "Filtres appliqués",
+                "I filtri sono stati applicati con successo.": "Les filtres ont été appliqués avec succès.",
+                "Filtri reimpostati": "Filtres réinitialisés",
+                "I filtri sono stati reimpostati ai valori predefiniti.": "Les filtres ont été réinitialisés aux valeurs par défaut.",
+                "Directory escluse": "Répertoires Exclus",
+                "File esclusi": "Fichiers Exclus",
+                "Estensioni incluse": "Extensions Incluses",
+                "Preset Configurazioni": "Configurations Prédéfinies",
+                "Preset:": "Preset:",
+                "-- Seleziona un preset --": "-- Sélectionner un preset --",
+                "Salva come nuovo": "Enregistrer comme nouveau",
+                "Aggiorna selezionato": "Mettre à jour sélectionné",
+                "Elimina selezionato": "Supprimer sélectionné",
+                "Percorso File Preset": "Chemin du Fichier de Preset",
+                "File preset:": "Fichier preset:",
+                "Applica": "Appliquer",
+                "Aggiungi": "Ajouter",
+                "Aggiungi Regex": "Ajouter Regex",
+                "Rimuovi": "Supprimer",
+                "Salva configurazione": "Enregistrer configuration",
+                "Carica configurazione": "Charger configuration",
+                "Guida alle Espressioni Regolari": "Guide des Expressions Régulières",
+                "Aiuto Espressioni Regolari": "Aide Expressions Régulières",
+                "Aggiungi directory": "Ajouter répertoire",
+                "Nome directory:": "Nom du répertoire:",
+                "Aggiungi pattern regex": "Ajouter motif regex",
+                "Inserisci un'espressione regolare per escludere le directory:": "Entrez une expression régulière pour exclure les répertoires:",
+                "Espressione non valida": "Expression non valide",
+                "L'espressione regolare inserita non è valida.": "L'expression régulière saisie n'est pas valide.",
+                "Aggiungi file": "Ajouter fichier",
+                "Nome file (es. .gitignore, thumbs.db):": "Nom du fichier (ex. .gitignore, thumbs.db):",
+                "Inserisci un'espressione regolare per escludere i file:": "Entrez une expression régulière pour exclure les fichiers:",
+                "Aggiungi estensione": "Ajouter extension",
+                "Estensione (con punto iniziale, es. .py):": "Extension (avec point initial, ex. .py):",
+                "Inserisci un'espressione regolare per includere i file:": "Entrez une expression régulière pour inclure les fichiers:",
+                "Filtri applicati con successo": "Filtres appliqués avec succès",
+                "Imposta file preset": "Définir fichier preset",
+                "Cambiare percorso preset": "Changer chemin preset",
+                "Vuoi spostare i preset in": "Voulez-vous déplacer les presets vers",
+                "I preset attuali verranno copiati nel nuovo percorso.": "Les presets actuels seront copiés vers le nouveau chemin.",
+                "Percorso preset impostato:": "Chemin preset défini:",
+                "Nome del preset:": "Nom du preset:",
+                "Il preset": "Le preset",
+                "esiste già. Sovrascrivere?": "existe déjà. Écraser?",
+                "Sei sicuro di voler aggiornare il preset": "Êtes-vous sûr de vouloir mettre à jour le preset",
+                "Sei sicuro di voler eliminare il preset": "Êtes-vous sûr de vouloir supprimer le preset",
+                "Esempi di pattern comuni:": "Exemples de motifs courants:",
+                "Corrisponde a nomi che iniziano con": "Correspond aux noms commençant par",
+                "Corrisponde a nomi che finiscono con": "Correspond aux noms se terminant par",
+                "Corrisponde a nomi come": "Correspond aux noms comme",
+                "ecc.": "etc.",
+                "Corrisponde a qualsiasi nome che contiene": "Correspond à tout nom contenant",
+                "Corrisponde a file che finiscono con": "Correspond aux fichiers se terminant par"
+            },
+            'es': {
+                "Directory Structure Exporter": "Exportador de Estructura de Directorios",
+                "Tema:": "Tema:",
+                "Lingua:": "Idioma:",
+                "Sistema": "Sistema",
+                "Chiaro": "Claro",
+                "Scuro": "Oscuro",
+                "Pronto": "Listo",
+                "Lingua cambiata": "Idioma cambiado",
+                "La lingua è stata cambiata. Alcune modifiche potrebbero richiedere il riavvio dell'applicazione.": "El idioma ha sido cambiado. Algunos cambios pueden requerir reiniciar la aplicación.",
+                "Errore": "Error",
+                "Errore nel caricamento della lingua selezionata.": "Error al cargar el idioma seleccionado.",
+                "Lingua cambiata in": "Idioma cambiado a",
+                "Esportazione": "Exportación",
+                "Filtri": "Filtros",
+                "Configurazione": "Configuración",
+                "Selezione Directory": "Selección de Directorio",
+                "Directory:": "Directorio:",
+                "Sfoglia...": "Examinar...",
+                "Trascina qui una cartella": "Arrastra una carpeta aquí",
+                "File di Output": "Archivo de Salida",
+                "File:": "Archivo:",
+                "Formato:": "Formato:",
+                "Opzioni di esportazione": "Opciones de exportación",
+                "Includi file": "Incluir archivos",
+                "Profondità massima:": "Profundidad máxima:",
+                "Illimitata": "Ilimitada",
+                "Esporta": "Exportar",
+                "Struttura Directory": "Estructura de Directorios",
+                "Mostra file": "Mostrar archivos",
+                "Applica filtri": "Aplicar filtros",
+                "Cerca:": "Buscar:",
+                "Cerca file o cartelle...": "Buscar archivos o carpetas...",
+                "Nome": "Nombre",
+                "Tipo": "Tipo",
+                "Percorso": "Ruta",
+                "Directory": "Directorio",
+                "File": "Archivo",
+                "Caricamento": "Cargando",
+                "Accesso negato": "Acceso denegado",
+                "Espandi tutto": "Expandir todo",
+                "Comprimi tutto": "Contraer todo",
+                "Apri in Esplora risorse": "Abrir en Explorador de archivos",
+                "Apri file": "Abrir archivo",
+                "Apri cartella contenitore": "Abrir carpeta contenedora",
+                "Copia percorso": "Copiar ruta",
+                "Percorso copiato:": "Ruta copiada:",
+                "Seleziona Directory": "Seleccionar Directorio",
+                "Salva File": "Guardar Archivo",
+                "Seleziona directory e file di output.": "Selecciona directorio y archivo de salida.",
+                "Seleziona prima una directory.": "Selecciona primero un directorio.",
+                "Esportazione completata": "Exportación completada",
+                "Errore durante l'esportazione": "Error durante la exportación",
+                "Errore durante l'esportazione:": "Error durante la exportación:",
+                "Struttura caricata:": "Estructura cargada:",
+                "Directory caricata:": "Directorio cargado:",
+                "Filtri dimensione file": "Filtros de Tamaño de Archivo",
+                "Dimensione minima (bytes):": "Tamaño mínimo (bytes):",
+                "Dimensione massima (bytes):": "Tamaño máximo (bytes):",
+                "Illimitato": "Ilimitado",
+                "Filtri data creazione": "Filtros de Fecha de Creación",
+                "Data minima:": "Fecha mínima:",
+                "Data massima:": "Fecha máxima:",
+                "Attiva filtro per data di creazione": "Activar filtro por fecha de creación",
+                "Filtri data modifica": "Filtros de Fecha de Modificación",
+                "Attiva filtro per data di modifica": "Activar filtro por fecha de modificación",
+                "Reimposta filtri predefiniti": "Restablecer filtros predeterminados",
+                "Filtri applicati": "Filtros aplicados",
+                "I filtri sono stati applicati con successo.": "Los filtros se han aplicado con éxito.",
+                "Filtri reimpostati": "Filtros restablecidos",
+                "I filtri sono stati reimpostati ai valori predefiniti.": "Los filtros se han restablecido a los valores predeterminados.",
+                "Directory escluse": "Directorios Excluidos",
+                "File esclusi": "Archivos Excluidos",
+                "Estensioni incluse": "Extensiones Incluidas",
+                "Preset Configurazioni": "Configuraciones Predefinidas",
+                "Preset:": "Preset:",
+                "-- Seleziona un preset --": "-- Seleccionar un preset --",
+                "Salva come nuovo": "Guardar como nuevo",
+                "Aggiorna selezionato": "Actualizar seleccionado",
+                "Elimina selezionato": "Eliminar seleccionado",
+                "Percorso File Preset": "Ruta del Archivo de Preset",
+                "File preset:": "Archivo preset:",
+                "Applica": "Aplicar",
+                "Aggiungi": "Agregar",
+                "Aggiungi Regex": "Agregar Regex",
+                "Rimuovi": "Eliminar",
+                "Salva configurazione": "Guardar configuración",
+                "Carica configurazione": "Cargar configuración",
+                "Guida alle Espressioni Regolari": "Guía de Expresiones Regulares",
+                "Aiuto Espressioni Regolari": "Ayuda de Expresiones Regulares",
+                "Aggiungi directory": "Agregar directorio",
+                "Nome directory:": "Nombre del directorio:",
+                "Aggiungi pattern regex": "Agregar patrón regex",
+                "Inserisci un'espressione regolare per escludere le directory:": "Ingresa una expresión regular para excluir directorios:",
+                "Espressione non valida": "Expresión no válida",
+                "L'espressione regolare inserita non è valida.": "La expresión regular ingresada no es válida.",
+                "Aggiungi file": "Agregar archivo",
+                "Nome file (es. .gitignore, thumbs.db):": "Nombre del archivo (ej. .gitignore, thumbs.db):",
+                "Inserisci un'espressione regolare per escludere i file:": "Ingresa una expresión regular para excluir archivos:",
+                "Aggiungi estensione": "Agregar extensión",
+                "Estensione (con punto iniziale, es. .py):": "Extensión (con punto inicial, ej. .py):",
+                "Inserisci un'espressione regolare per includere i file:": "Ingresa una expresión regular para incluir archivos:",
+                "Filtri applicati con successo": "Filtros aplicados con éxito",
+                "Imposta file preset": "Establecer archivo preset",
+                "Cambiare percorso preset": "Cambiar ruta preset",
+                "Vuoi spostare i preset in": "¿Quieres mover los presets a",
+                "I preset attuali verranno copiati nel nuovo percorso.": "Los presets actuales se copiarán a la nueva ruta.",
+                "Percorso preset impostato:": "Ruta preset establecida:",
+                "Nome del preset:": "Nombre del preset:",
+                "Il preset": "El preset",
+                "esiste già. Sovrascrivere?": "ya existe. ¿Sobrescribir?",
+                "Sei sicuro di voler aggiornare il preset": "¿Estás seguro de que quieres actualizar el preset",
+                "Sei sicuro di voler eliminare il preset": "¿Estás seguro de que quieres eliminar el preset",
+                "Esempi di pattern comuni:": "Ejemplos de patrones comunes:",
+                "Corrisponde a nomi che iniziano con": "Coincide con nombres que comienzan con",
+                "Corrisponde a nomi che finiscono con": "Coincide con nombres que terminan con",
+                "Corrisponde a nomi come": "Coincide con nombres como",
+                "ecc.": "etc.",
+                "Corrisponde a qualsiasi nome che contiene": "Coincide con cualquier nombre que contenga",
+                "Corrisponde a file che finiscono con": "Coincide con archivos que terminan con"
+            }
+        }
+
+        self.current_translations: Dict[str, str] = {}
         self._missing_translations: Set[str] = set()
-        
-        os.makedirs(self.translations_dir, exist_ok=True)
-    
+
     def initialize(self, settings: QSettings) -> None:
-        """Inizializza il manager con le impostazioni"""
         self.settings = settings
-        self._create_translation_files_if_needed()
-        
-        # Carica lingua salvata o sistema
         saved_language = settings.value("language", None)
         if saved_language and saved_language in self.available_languages:
             self.load_language(saved_language)
         else:
-            # Rileva lingua sistema o default
             from PyQt6.QtCore import QLocale
             system_lang = QLocale.system().name()[:2]
             target_lang = system_lang if system_lang in self.available_languages else 'it'
             self.load_language(target_lang)
-    
+
     def get_available_languages(self) -> Dict[str, str]:
         return self.available_languages.copy()
-    
+
     def get_current_language(self) -> str:
         return self.current_language
-    
+
     def get_current_language_name(self) -> str:
         return self.available_languages.get(self.current_language, 'Italiano')
-    
+
     def load_language(self, language_code: str) -> bool:
-        """Carica una lingua specifica"""
         if language_code not in self.available_languages:
             return False
-        
+
         old_language = self.current_language
         self.current_language = language_code
-        
+
         if language_code == 'it':
-            # Italiano è default, nessuna traduzione necessaria
             self.current_translations = {}
             self._missing_translations.clear()
         else:
-            # Carica da cache o file
-            if language_code in self._translation_cache:
-                self.current_translations = self._translation_cache[language_code]
-            else:
-                success = self._load_from_file(language_code)
-                if not success:
-                    self.current_language = old_language
-                    return False
-        
-        # Salva impostazione e emetti segnale
+            self.current_translations = self._translations.get(language_code, {})
+
         if self.settings:
             self.settings.setValue("language", language_code)
-        
+
         if old_language != language_code:
             self.language_changed.emit(language_code)
-        
+
         return True
-    
+
     def translate(self, text: str, context: Optional[str] = None) -> str:
-        """Traduce un testo"""
         if self.current_language == 'it' or not text:
             return text
-        
-        # Cerca traduzione
+
         translation = self.current_translations.get(text)
         if translation:
             return translation
-        
-        # Traduzione mancante - log per debugging
+
         if text not in self._missing_translations:
             self._missing_translations.add(text)
             print(f"Traduzione mancante [{self.current_language}]: '{text}'")
-        
-        return text  # Fallback a italiano
-    
-    def _load_from_file(self, language_code: str) -> bool:
-        """Carica traduzioni da file JSON"""
-        json_file = os.path.join(self.translations_dir, f"{language_code}.json")
-        
-        try:
-            with open(json_file, 'r', encoding='utf-8') as f:
-                translations = json.load(f)
-            
-            if not isinstance(translations, dict):
-                raise ValueError("Il file deve contenere un oggetto JSON")
-            
-            # Cache e imposta traduzioni correnti
-            self._translation_cache[language_code] = translations
-            self.current_translations = translations
-            
-            print(f"Caricate {len(translations)} traduzioni per {language_code}")
-            return True
-            
-        except Exception as e:
-            print(f"Errore caricamento traduzioni {language_code}: {e}")
-            self.current_translations = {}
-            return False
-    
-    def _create_translation_files_if_needed(self) -> None:
-        """Crea file JSON vuoti se non esistono"""
-        for lang_code in self.available_languages.keys():
-            if lang_code == 'it':
-                continue
-                
-            json_file = os.path.join(self.translations_dir, f"{lang_code}.json")
-            if not os.path.exists(json_file):
-                try:
-                    with open(json_file, 'w', encoding='utf-8') as f:
-                        json.dump({}, f, indent=2, ensure_ascii=False)
-                    print(f"Creato file traduzione: {json_file}")
-                except Exception as e:
-                    print(f"Errore creazione {json_file}: {e}")
-    
+
+        return text
+
     def get_missing_translations(self) -> Set[str]:
-        """Restituisce le traduzioni mancanti per debug"""
         return self._missing_translations.copy()
-    
-    def add_translation(self, italian_text: str, translated_text: str, 
+
+    def add_translation(self, italian_text: str, translated_text: str,
                        language_code: Optional[str] = None) -> bool:
-        """Aggiunge una traduzione (utile per tool di traduzione)"""
         target_lang = language_code or self.current_language
-        
         if target_lang == 'it':
-            return True  # Non serve tradurre l'italiano
-            
-        json_file = os.path.join(self.translations_dir, f"{target_lang}.json")
-        
-        try:
-            # Carica esistenti
-            translations = {}
-            if os.path.exists(json_file):
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    translations = json.load(f)
-            
-            # Aggiungi nuova
-            translations[italian_text] = translated_text
-            
-            # Salva
-            with open(json_file, 'w', encoding='utf-8') as f:
-                json.dump(translations, f, indent=2, ensure_ascii=False)
-            
-            # Aggiorna cache e traduzioni correnti se necessario
-            self._translation_cache[target_lang] = translations
-            if target_lang == self.current_language:
-                self.current_translations = translations
-                if italian_text in self._missing_translations:
-                    self._missing_translations.remove(italian_text)
-            
             return True
-            
-        except Exception as e:
-            print(f"Errore aggiunta traduzione: {e}")
-            return False
+        if target_lang not in self._translations:
+            self._translations[target_lang] = {}
+        self._translations[target_lang][italian_text] = translated_text
+        if target_lang == self.current_language:
+            self.current_translations = self._translations[target_lang]
+            if italian_text in self._missing_translations:
+                self._missing_translations.remove(italian_text)
+        return True
 
 # Istanza globale
 translation_manager = TranslationManager()
 
 def tr(text: str, context: Optional[str] = None) -> str:
-    """Funzione di traduzione globale semplificata"""
     return translation_manager.translate(text, context)

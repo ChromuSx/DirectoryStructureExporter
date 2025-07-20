@@ -28,12 +28,6 @@ def setup_translations(settings):
     print(f"Lingua caricata: {translation_manager.get_current_language_name()}")
 
 def main():
-    # Crea le cartelle necessarie
-    os.makedirs("core", exist_ok=True)
-    os.makedirs("ui", exist_ok=True)
-    os.makedirs("utils", exist_ok=True)
-    os.makedirs("assets", exist_ok=True)
-    os.makedirs("translations", exist_ok=True)
     
     app = QApplication(sys.argv)
     app.setApplicationName("Directory Structure Exporter")
