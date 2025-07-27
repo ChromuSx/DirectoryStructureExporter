@@ -59,14 +59,26 @@ class ExportTab(QWidget):
         output_layout.addWidget(self.browse_output_btn)
         self.output_group.setLayout(output_layout)
         
+        # Riga per formato e stile indentazione
+        format_style_layout = QHBoxLayout()
+        
         # Selezione formato
-        format_layout = QHBoxLayout()
         self.format_label = QLabel(tr("Formato:"))
-        format_layout.addWidget(self.format_label)
+        format_style_layout.addWidget(self.format_label)
         self.format_combo = QComboBox()
         self.format_combo.addItems(["TXT", "HTML", "JSON", "XML"])
-        format_layout.addWidget(self.format_combo)
-        format_layout.addStretch(1)
+        format_style_layout.addWidget(self.format_combo)
+        
+        format_style_layout.addSpacing(20)
+        
+        # Selezione stile indentazione
+        self.indent_style_label = QLabel(tr("Stile indentazione:"))
+        format_style_layout.addWidget(self.indent_style_label)
+        self.indent_style_combo = QComboBox()
+        self.populate_indent_styles()
+        format_style_layout.addWidget(self.indent_style_combo)
+        
+        format_style_layout.addStretch(1)
         
         # Opzioni di esportazione
         self.options_group = QGroupBox(tr("Opzioni di esportazione"))
@@ -97,7 +109,10 @@ class ExportTab(QWidget):
         action_layout = QHBoxLayout()
         self.export_btn = QPushButton(tr("Esporta"))
         self.export_btn.clicked.connect(self.export_structure)
+        self.preview_btn = QPushButton(tr("Anteprima"))
+        self.preview_btn.clicked.connect(self.show_preview)
         action_layout.addWidget(self.export_btn)
+        action_layout.addWidget(self.preview_btn)
 
         # Area vista struttura
         self.tree_group = QGroupBox(tr("Struttura Directory"))
@@ -140,10 +155,59 @@ class ExportTab(QWidget):
         # Aggiungi tutto al layout principale
         layout.addWidget(self.dir_group)
         layout.addWidget(self.output_group)
-        layout.addLayout(format_layout)
+        layout.addLayout(format_style_layout)
         layout.addWidget(self.options_group)
         layout.addLayout(action_layout)
         layout.addWidget(self.tree_group, 1)
+    
+    def populate_indent_styles(self):
+        """Popola il combo box con gli stili di indentazione disponibili"""
+        styles = self.exporter.get_available_indent_styles()
+        self.indent_style_combo.clear()
+        
+        for key, name in styles.items():
+            self.indent_style_combo.addItem(name, key)
+    
+    def show_preview(self):
+        """Mostra un'anteprima della struttura con lo stile selezionato"""
+        directory = self.dir_path.text()
+        if not directory:
+            QMessageBox.warning(self, tr("Errore"), tr("Seleziona prima una directory."))
+            return
+        
+        include_files = self.include_files_check.isChecked()
+        max_depth = None if self.depth_spin.value() == 0 else self.depth_spin.value()
+        indent_style = self.indent_style_combo.currentData()
+        
+        # Genera anteprima
+        preview_lines = self.exporter.generate_preview(
+            directory, max_items=50, include_files=include_files, 
+            max_depth=max_depth, indent_style=indent_style
+        )
+        
+        if preview_lines:
+            preview_text = "\n".join(preview_lines)
+            if len(preview_lines) >= 50:
+                preview_text += "\n\n... (anteprima limitata a 50 elementi)"
+            
+            # Crea finestra di dialogo per l'anteprima
+            from PyQt6.QtWidgets import QDialog, QTextEdit, QVBoxLayout as QVBoxLayoutDialog
+            
+            dialog = QDialog(self)
+            dialog.setWindowTitle(tr("Anteprima struttura"))
+            dialog.resize(600, 400)
+            
+            layout = QVBoxLayoutDialog()
+            text_edit = QTextEdit()
+            text_edit.setPlainText(preview_text)
+            text_edit.setFont(self.font())  # Usa font monospace
+            text_edit.setReadOnly(True)
+            
+            layout.addWidget(text_edit)
+            dialog.setLayout(layout)
+            dialog.exec()
+        else:
+            QMessageBox.information(self, tr("Anteprima"), tr("Nessun elemento da visualizzare con i filtri attuali."))
     
     def retranslate_ui(self):
         """Aggiorna tutte le traduzioni dell'interfaccia"""
@@ -157,6 +221,7 @@ class ExportTab(QWidget):
         self.dir_label.setText(tr("Directory:"))
         self.file_label.setText(tr("File:"))
         self.format_label.setText(tr("Formato:"))
+        self.indent_style_label.setText(tr("Stile indentazione:"))
         self.depth_label.setText(tr("Profondità massima:"))
         self.search_label.setText(tr("Cerca:"))
         
@@ -164,6 +229,7 @@ class ExportTab(QWidget):
         self.browse_dir_btn.setText(tr("Sfoglia..."))
         self.browse_output_btn.setText(tr("Sfoglia..."))
         self.export_btn.setText(tr("Esporta"))
+        self.preview_btn.setText(tr("Anteprima"))
         
         # Aggiorna i checkbox
         self.include_files_check.setText(tr("Includi file"))
@@ -177,6 +243,15 @@ class ExportTab(QWidget):
         
         # Aggiorna header dell'albero
         self.tree_widget.setHeaderLabels([tr("Nome"), tr("Tipo"), tr("Percorso")])
+        
+        # Ricarica gli stili di indentazione tradotti
+        current_style = self.indent_style_combo.currentData()
+        self.populate_indent_styles()
+        # Ripristina la selezione
+        for i in range(self.indent_style_combo.count()):
+            if self.indent_style_combo.itemData(i) == current_style:
+                self.indent_style_combo.setCurrentIndex(i)
+                break
     
     def setup_tree_context_menu(self):
         """Configura il menu contestuale per l'albero"""
@@ -261,6 +336,7 @@ class ExportTab(QWidget):
         
         include_files = self.include_files_check.isChecked()
         max_depth = None if self.depth_spin.value() == 0 else self.depth_spin.value()
+        indent_style = self.indent_style_combo.currentData()
         
         selected_format = self.format_combo.currentText()
         output_path = Path(output_file)
@@ -277,11 +353,11 @@ class ExportTab(QWidget):
         try:
             if selected_format == "TXT":
                 success, message = self.exporter.export_structure(
-                    directory, output_file, include_files, max_depth
+                    directory, output_file, include_files, max_depth, indent_style
                 )
             elif selected_format == "HTML":
                 success, message = self.exporter.export_structure_html(
-                    directory, output_file, include_files, max_depth
+                    directory, output_file, include_files, max_depth, indent_style
                 )
             elif selected_format == "JSON":
                 success, message = self.exporter.export_structure_json(
@@ -480,6 +556,7 @@ class ExportTab(QWidget):
         self.settings.setValue("format", self.format_combo.currentText())
         self.settings.setValue("include_files", self.include_files_check.isChecked())
         self.settings.setValue("max_depth", self.depth_spin.value())
+        self.settings.setValue("indent_style", self.indent_style_combo.currentData())
     
     def load_settings(self):
         """Carica le impostazioni della scheda"""
@@ -493,6 +570,13 @@ class ExportTab(QWidget):
             
         self.include_files_check.setChecked(self.settings.value("include_files", True, type=bool))
         self.depth_spin.setValue(self.settings.value("max_depth", 0, type=int))
+        
+        # Carica lo stile di indentazione
+        saved_style = self.settings.value("indent_style", "spaces")
+        for i in range(self.indent_style_combo.count()):
+            if self.indent_style_combo.itemData(i) == saved_style:
+                self.indent_style_combo.setCurrentIndex(i)
+                break
         
         directory_path = self.dir_path.text()
         if directory_path:
