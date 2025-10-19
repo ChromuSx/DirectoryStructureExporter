@@ -4,6 +4,13 @@
   <img src="assets/logo.png" alt="Directory Structure Exporter Logo" width="200">
 </div>
 
+<p align="center">
+  <a href="https://github.com/sponsors/ChromuSx"><img src="https://img.shields.io/badge/Sponsor-GitHub-EA4AAA?style=for-the-badge&logo=github-sponsors&logoColor=white" alt="GitHub Sponsors"></a>
+  <a href="https://ko-fi.com/chromus"><img src="https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+  <a href="https://buymeacoffee.com/chromus"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
+  <a href="https://www.paypal.com/paypalme/giovanniguarino1999"><img src="https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="PayPal"></a>
+</p>
+
 A comprehensive desktop application for visualizing, filtering, and exporting directory structures in various formats. Built with Python and PyQt6, offering an intuitive graphical interface and powerful filtering options.
 
 > **Development Note**: This project was entirely developed and tested using Claude 4 (Sonnet), Anthropic's latest AI model. Claude 4 demonstrates advanced code architecture, multi-file project management, and sophisticated GUI development capabilities, showcasing state-of-the-art AI-assisted software development.
