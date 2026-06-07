@@ -192,7 +192,7 @@ The application shows status messages in the bottom bar and informative dialogs 
 
 ## 📄 License
 
-Project developed for educational and commercial use. Check the license file for specific details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
@@ -219,6 +219,6 @@ Every contribution, no matter how small, is greatly appreciated! ❤️
 
 For issues, bug reports, or feature requests, use the repository's issue system.
 
----
-
-*Developed entirely with Claude 4 (Sonnet) - Showcasing AI-powered software development*
+<div align="center">
+  <sub>Made with ❤️ by <a href="https://github.com/ChromuSx">Giovanni Guarino</a></sub>
+</div>
